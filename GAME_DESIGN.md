@@ -223,3 +223,35 @@ Difficulty, on top of the 7×7 pass from earlier the same day:
 - Re-verified the whole set the same way as every previous pass
   (brute force per puzzle, 0-mirror never wins) and replayed puzzle
   #1's real 3-mirror solution end-to-end in a browser — solved clean.
+
+## The actual root cause of "clicking does nothing" (2026-08-17, evening)
+
+Neither of the above was it. The real bug: today's puzzle (date key
+`2026-08-17`) got redefined three times during the difficulty passes
+above, but saved game state (`mirror-game-state` in localStorage) was
+only ever keyed by *date*, never by puzzle *content*. If the original
+trivially-easy par-1 puzzle got solved on the very first click during
+early testing, `gameStatus: 'won'` persisted to localStorage under
+that date key — and every redesign shipped under the same key since
+then inherited that stale "already won" state, which disables every
+slot (`disabled={won || ...}`). Disabled buttons still fire `:hover`
+(so the UI looked alive) but never fire `click` (so nothing happened)
+— explains both bug reports exactly, and why headless testing (fresh
+browser profile every run, no persisted localStorage) never caught it.
+
+Fix in `useGameState.js`: saved state now carries a `puzzleFingerprint`
+(JSON of size/source/target/fixed/slots/par) alongside the date key;
+`loadState` discards the save if today's puzzle doesn't match it
+anymore. Self-healing for saves that already existed before this fix
+too — they have no `puzzleFingerprint` field at all, so they mismatch
+unconditionally and get dropped, no manual `localStorage.clear()`
+needed. Verified by reproducing the exact failure (planted a
+legacy-schema `won` save, reloaded, confirmed every slot reported
+`disabled: true`) and then confirming the fix clears it.
+
+**Lesson for future puzzle edits**: this class of bug can recur any
+time a *shipped* day's puzzle is edited in place rather than only
+ever appending new dates. The fingerprint check makes it safe now,
+but the instinct going forward should still be to add new puzzles
+rather than mutate a date that might already be in someone's
+`localStorage`.
