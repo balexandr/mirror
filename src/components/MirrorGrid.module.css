@@ -110,32 +110,39 @@
   z-index: 1;
   color: var(--text-dim);
 
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
-    linear-gradient(160deg, #1a1c3c 0%, #12142e 60%, #0d0e22 100%);
-
-  box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, 0.06),
-    inset -1px -1px 0 rgba(0, 0, 0, 0.4),
-    inset 0 2px 6px rgba(0, 0, 0, 0.3);
-
-  border: 1px solid rgba(99, 102, 241, 0.08);
-  transition: background 0.15s, border-color 0.15s, transform 0.08s;
+  /* Inert floor is deliberately flat and receding — most of a big board
+     is non-interactive, and it should read that way at a glance so the
+     tappable cells (below) are the only thing that pops. */
+  background: linear-gradient(160deg, #121428 0%, #0e0f24 60%, #0a0b1c 100%);
+  border: 1px solid rgba(99, 102, 241, 0.05);
+  transition: background 0.15s, border-color 0.15s, transform 0.08s, box-shadow 0.15s;
 }
 
 /* Floor cells and disabled slots show the default cursor, not pointer */
 .cell:disabled { cursor: default; }
 
-/* ── Interactive slot ─────────────────────────────────────────── */
+/* ── Interactive slot — unmistakable, pulses to invite a tap ───── */
 .slotEmpty {
-  border: 1.5px dashed rgba(165, 180, 252, 0.28);
+  border: 2px dashed rgba(165, 180, 252, 0.6);
   cursor: pointer;
+  background:
+    linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, transparent 55%),
+    linear-gradient(160deg, #1a1c3c 0%, #12142e 60%, #0d0e22 100%);
+  box-shadow: 0 0 0 0 rgba(165, 180, 252, 0.35);
+  animation: slotInvite 2.2s ease-in-out infinite;
+}
+
+@keyframes slotInvite {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(165, 180, 252, 0.25); border-color: rgba(165, 180, 252, 0.5); }
+  50%       { box-shadow: 0 0 10px 1px rgba(165, 180, 252, 0.35); border-color: rgba(199, 210, 254, 0.85); }
 }
 
 .slotEmpty:hover {
-  border-color: rgba(165, 180, 252, 0.55);
+  animation-play-state: paused;
+  border-color: rgba(199, 210, 254, 0.9);
+  box-shadow: 0 0 12px 2px rgba(165, 180, 252, 0.4);
   background:
-    linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, transparent 55%),
     linear-gradient(160deg, #1a1c3c 0%, #12142e 60%, #0d0e22 100%);
 }
 
@@ -152,8 +159,32 @@
     0 0 10px rgba(99, 102, 241, 0.2);
 }
 
+/* ── Fixed mirror — scenery, not a slot: dim/metallic, no glow, no pointer ── */
+.fixedMirror {
+  cursor: default;
+  color: #8b90b8;
+  border-color: rgba(139, 144, 184, 0.25);
+  background:
+    linear-gradient(135deg, rgba(139, 144, 184, 0.06) 0%, transparent 55%),
+    linear-gradient(160deg, #1c1e38 0%, #14162c 60%, #0d0e22 100%);
+  box-shadow:
+    inset 1px 1px 0 rgba(139, 144, 184, 0.1),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.35);
+}
+
 .popped {
   animation: popIn 0.2s ease;
+}
+
+/* Tapped floor — a quick "this isn't a slot" flash, not an error */
+.denied {
+  animation: deniedFlash 0.26s ease;
+}
+
+@keyframes deniedFlash {
+  0%   { background: linear-gradient(160deg, #121428 0%, #0e0f24 60%, #0a0b1c 100%); }
+  40%  { background: linear-gradient(160deg, #241a1a 0%, #1a1214 60%, #120c0d 100%); border-color: rgba(239, 68, 68, 0.3); }
+  100% { background: linear-gradient(160deg, #121428 0%, #0e0f24 60%, #0a0b1c 100%); }
 }
 
 /* ── Beam-lit cell overlay ───────────────────────────────────── */

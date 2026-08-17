@@ -105,6 +105,12 @@
   align-self: flex-start;
 }
 
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  align-self: flex-start;
+}
+
 /* ── HUD ── */
 .hud {
   width: 100%;

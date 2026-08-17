@@ -148,6 +148,7 @@ export default function App() {
         <p className={styles.prompt}>
           Bend the beam to the target
         </p>
+        <p className={styles.hint}>Tap the glowing dashed cells to place mirrors</p>
 
         <MirrorGrid
           puzzle={puzzle}

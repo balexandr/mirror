@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import styles from './MirrorGrid.module.css';
 
 function cellKey(row, col) {
@@ -20,6 +21,9 @@ function arrowPlacement(source, size) {
 export default function MirrorGrid({ puzzle, mirrors, beam, gameStatus, poppedSlot, onToggleSlot }) {
   const { size, source, target, fixed = [], slots } = puzzle;
   const won = gameStatus === 'won';
+  // Floor is most of a big board and isn't a mirror slot — tapping it should
+  // never feel like nothing happened, so it gets a quick "not tappable" flash.
+  const [deniedCell, setDeniedCell] = useState(null);
 
   const fixedMap = {};
   for (const f of fixed) fixedMap[cellKey(f.row, f.col)] = f;
@@ -91,6 +95,11 @@ export default function MirrorGrid({ puzzle, mirrors, beam, gameStatus, poppedSl
               const orientation = isFixedMirror ? f.orientation : mirrors[key];
               const onBeam = beamCellSet.has(key);
               const popped = poppedSlot === key;
+              // Fixed mirrors are scenery the beam bounces off, same as a wall —
+              // not a slot, and not "floor" either, so they get neither the
+              // tap-to-place behavior nor the denied-flash meant for empty floor.
+              const isFloor = !isSource && !isTarget && !isWall && !isSlot && !isFixedMirror;
+              const denied = deniedCell === key;
 
               let cls = styles.cell;
               if (isWall) cls += ` ${styles.wall}`;
@@ -98,23 +107,32 @@ export default function MirrorGrid({ puzzle, mirrors, beam, gameStatus, poppedSl
               if (isTarget) cls += ` ${styles.target}`;
               if (isTarget && won) cls += ` ${styles.targetHit}`;
               if (isSlot && !orientation) cls += ` ${styles.slotEmpty}`;
-              if (orientation) cls += ` ${styles.hasMirror}`;
+              if (isFixedMirror) cls += ` ${styles.fixedMirror}`;
+              else if (orientation) cls += ` ${styles.hasMirror}`;
               if (onBeam) cls += ` ${styles.onBeam}`;
               if (popped) cls += ` ${styles.popped}`;
+              if (denied) cls += ` ${styles.denied}`;
 
               return (
                 <button
                   key={key}
                   type="button"
                   className={cls}
-                  disabled={!isSlot || won || isWall}
-                  onClick={() => isSlot && onToggleSlot(r, c)}
+                  disabled={won || isWall || isSource || isTarget || isFixedMirror}
+                  onClick={() => {
+                    if (isSlot) onToggleSlot(r, c);
+                    else if (isFloor) {
+                      setDeniedCell(key);
+                      setTimeout(() => setDeniedCell(null), 260);
+                    }
+                  }}
                   aria-label={
                     isSource ? 'Light source'
                     : isTarget ? 'Target'
                     : isWall ? 'Wall'
+                    : isFixedMirror ? `Fixed mirror, permanently set to ${orientation}`
                     : isSlot ? `Mirror slot, row ${r + 1} column ${c + 1}${orientation ? `, mirror set to ${orientation}` : ', empty'}`
-                    : 'Floor'
+                    : 'Floor, not tappable'
                   }
                 >
                   {isWall && <span className={styles.wallGlyph} aria-hidden="true" />}

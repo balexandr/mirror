@@ -174,3 +174,52 @@ across the whole set, not just day one:
   headless browser after the change to confirm the win path still
   fires correctly at the new size (it does — "Perfect beam!" at
   2/2 mirrors).
+
+## "Nothing happens when I click" + "still too easy" (2026-08-17, later still)
+
+Two reports at once. Investigated the click complaint first — it
+turned out not to be a click-handling bug: fresh hit-tests, cycling
+the same cell three times, and clicking every slot in sequence all
+registered correctly in a real headless browser, every time. The
+actual problem was **affordance**: on a 7×7 board only 4–7 of 49
+cells are tappable, and the dashed-border cue wasn't loud enough —
+most taps were landing on inert floor tiles and correctly doing
+nothing, which reads as broken. Fixed for real, not dismissed:
+
+- Slot cells now pulse (`slotInvite` keyframe — glow/border animate
+  on a 2.2s loop) so they're unmistakable against the board.
+- Floor cells got flattened further (no border glow, no gradient
+  highlight) so they visually recede instead of competing with slots.
+- Tapping floor now gets a quick `deniedFlash` (a soft red-tinted
+  pulse, not an error state) instead of silently doing nothing — the
+  UI always acknowledges a tap.
+- Added an explicit on-screen hint: "Tap the glowing dashed cells to
+  place mirrors."
+- Fixed mirrors (pre-set obstacles) were being treated as tappable
+  "floor" by accident — clicking one triggered the denied-flash even
+  though it already visibly has a mirror on it. Gave them their own
+  `.fixedMirror` style (dim/metallic, no glow, genuinely disabled)
+  so they read as scenery, not a miss-click target.
+
+Difficulty, on top of the 7×7 pass from earlier the same day:
+
+- **7×7 → 9×9.** Cell gap already scales down at size ≥ 7; no other
+  layout change needed.
+- **Fixed mirrors introduced** (`fixed[].type: 'mirror'`) — forced
+  bounces baked into the puzzle that the player has to route around
+  or chain off of, not just walls to avoid. Puzzle generator now
+  places 0–2 per puzzle alongside 2–4 walls.
+- **Par curve raised again**: 3, 4, 4, 5, 5, 5, 5, 6, 6, 7, 5, 7, 7, 8
+  (was 2–6 on the 7×7 pass). Not perfectly monotonic day to day
+  (day 11 dips to 5) — normal for a daily-puzzle curve, not a bug.
+- Puzzle generation script had a real bug of its own: it computed
+  each puzzle's par to *filter* candidates but never attached that
+  value to the puzzle object before writing it out, so 10 of 14
+  puzzles briefly shipped with `par: undefined`. Caught before
+  install by inspecting the generator's own output, not assumed —
+  fixed by recomputing par from scratch (brute force, same as
+  everywhere else) at install time instead of trusting a value that
+  was never actually written.
+- Re-verified the whole set the same way as every previous pass
+  (brute force per puzzle, 0-mirror never wins) and replayed puzzle
+  #1's real 3-mirror solution end-to-end in a browser — solved clean.
