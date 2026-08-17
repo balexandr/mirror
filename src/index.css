@@ -1,0 +1,152 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0c0d1a;
+  --bg-surface: #111228;
+  --surface: #171933;
+  --surface-hover: #1e2040;
+  --surface-elevated: #262850;
+  --text: #eef0ff;
+  --text-secondary: #a6abd1;
+  --text-dim: #565b85;
+  --accent: #6366f1;
+  --accent-hover: #7b7ff5;
+  --accent-subtle: rgba(99, 102, 241, 0.16);
+  --accent-glow: rgba(99, 102, 241, 0.35);
+  --beam: #c7d2fe;
+  --beam-glow: rgba(165, 180, 252, 0.55);
+  --win: #fbbf24;
+  --win-glow: rgba(251, 191, 36, 0.55);
+  --correct: #6fbf4a;
+  --correct-subtle: rgba(111, 191, 74, 0.14);
+  --wrong: #ef4444;
+  --wrong-subtle: rgba(239, 68, 68, 0.12);
+  --border: rgba(238, 240, 255, 0.09);
+  --border-hover: rgba(238, 240, 255, 0.17);
+  --shadow-sm: 0 1px 2px rgba(2, 2, 10, 0.4);
+  --shadow-md: 0 4px 12px rgba(2, 2, 10, 0.5);
+  --shadow-lg: 0 8px 30px rgba(2, 2, 10, 0.6);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body {
+  background-color: #08091a;
+  background-image:
+    /* Faint refracted rays fanning from an off-center light source */
+    conic-gradient(
+      from 200deg at 30% 20%,
+      rgba(99, 102, 241, 0.08) 0deg,
+      transparent 8deg,
+      transparent 22deg,
+      rgba(165, 180, 252, 0.06) 30deg,
+      transparent 38deg,
+      transparent 55deg,
+      rgba(99, 102, 241, 0.07) 63deg,
+      transparent 70deg,
+      transparent 360deg
+    ),
+    /* Crystalline facet lines, like cracked glass */
+    repeating-linear-gradient(
+      35deg,
+      transparent 0px, transparent 60px,
+      rgba(165, 180, 252, 0.035) 60px, rgba(165, 180, 252, 0.035) 61px
+    ),
+    repeating-linear-gradient(
+      -55deg,
+      transparent 0px, transparent 90px,
+      rgba(99, 102, 241, 0.03) 90px, rgba(99, 102, 241, 0.03) 91px
+    ),
+    /* Soft glow pooling lower-right */
+    radial-gradient(ellipse at 75% 80%, rgba(99, 102, 241, 0.09) 0%, transparent 50%),
+    /* Vignette */
+    radial-gradient(ellipse at 50% 45%, transparent 15%, rgba(3, 3, 12, 0.96) 88%),
+    /* Base */
+    linear-gradient(170deg, #12132b 0%, #08091a 100%);
+  background-attachment: fixed;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(165, 180, 252, 0.07) 0%, transparent 45%),
+    radial-gradient(ellipse at 75% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 45%);
+  z-index: 0;
+  animation: glintBreath 7s ease-in-out infinite;
+}
+
+@keyframes glintBreath {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+button {
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+  color: inherit;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.05); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes popIn {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes beamPulse {
+  0%, 100% { opacity: 0.75; }
+  50%       { opacity: 1; }
+}

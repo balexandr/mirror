@@ -1,0 +1,121 @@
+// Each puzzle: redirect the light beam from source to target by placing
+// mirrors ('/' or '\\') in the interactive slot cells. `fixed` cells are
+// walls baked into the puzzle (block the beam on contact). par = true
+// minimum mirror count to solve, brute-force verified against every
+// combination of slot orientations (see GAME_DESIGN.md).
+const puzzles = {
+  '2026-08-17': {
+    size: 5,
+    source: { row: 4, col: 0, dir: 'right' },
+    target: { row: 3, col: 4 },
+    fixed: [],
+    slots: [{ row: 4, col: 4 }],
+    par: 1,
+  },
+  '2026-08-18': {
+    size: 5,
+    source: { row: 0, col: 0, dir: 'right' },
+    target: { row: 1, col: 2 },
+    fixed: [],
+    slots: [{ row: 4, col: 2 }, { row: 0, col: 2 }],
+    par: 1,
+  },
+  '2026-08-19': {
+    size: 5,
+    source: { row: 4, col: 2, dir: 'up' },
+    target: { row: 0, col: 3 },
+    fixed: [],
+    slots: [{ row: 3, col: 3 }, { row: 3, col: 2 }],
+    par: 2,
+  },
+  '2026-08-20': {
+    size: 5,
+    source: { row: 0, col: 0, dir: 'right' },
+    target: { row: 3, col: 4 },
+    fixed: [],
+    slots: [{ row: 3, col: 3 }, { row: 0, col: 3 }, { row: 3, col: 0 }],
+    par: 2,
+  },
+  '2026-08-21': {
+    size: 5,
+    source: { row: 1, col: 4, dir: 'left' },
+    target: { row: 2, col: 0 },
+    fixed: [{ row: 3, col: 4, type: 'wall' }],
+    slots: [{ row: 1, col: 2 }, { row: 2, col: 2 }, { row: 2, col: 4 }],
+    par: 2,
+  },
+  '2026-08-22': {
+    size: 5,
+    source: { row: 4, col: 0, dir: 'up' },
+    target: { row: 2, col: 2 },
+    fixed: [],
+    slots: [{ row: 3, col: 0 }, { row: 0, col: 2 }, { row: 0, col: 0 }],
+    par: 2,
+  },
+  '2026-08-23': {
+    size: 5,
+    source: { row: 1, col: 0, dir: 'right' },
+    target: { row: 4, col: 4 },
+    fixed: [],
+    slots: [{ row: 1, col: 3 }, { row: 2, col: 3 }, { row: 2, col: 4 }],
+    par: 3,
+  },
+  '2026-08-24': {
+    size: 5,
+    source: { row: 4, col: 4, dir: 'up' },
+    target: { row: 2, col: 3 },
+    fixed: [{ row: 1, col: 2, type: 'wall' }],
+    slots: [{ row: 0, col: 4 }, { row: 4, col: 2 }, { row: 0, col: 3 }, { row: 1, col: 4 }],
+    par: 2,
+  },
+  '2026-08-25': {
+    size: 5,
+    source: { row: 0, col: 4, dir: 'left' },
+    target: { row: 3, col: 1 },
+    fixed: [],
+    slots: [{ row: 2, col: 2 }, { row: 4, col: 3 }, { row: 2, col: 1 }, { row: 0, col: 2 }],
+    par: 3,
+  },
+  '2026-08-26': {
+    size: 5,
+    source: { row: 2, col: 0, dir: 'right' },
+    target: { row: 3, col: 1 },
+    fixed: [{ row: 4, col: 4, type: 'wall' }],
+    slots: [{ row: 0, col: 4 }, { row: 4, col: 1 }, { row: 2, col: 4 }, { row: 0, col: 1 }],
+    par: 3,
+  },
+  '2026-08-27': {
+    size: 5,
+    source: { row: 3, col: 0, dir: 'right' },
+    target: { row: 4, col: 3 },
+    fixed: [{ row: 1, col: 1, type: 'wall' }],
+    slots: [{ row: 4, col: 0 }, { row: 4, col: 2 }, { row: 3, col: 2 }],
+    par: 2,
+  },
+  '2026-08-28': {
+    size: 5,
+    source: { row: 4, col: 0, dir: 'right' },
+    target: { row: 3, col: 2 },
+    fixed: [],
+    slots: [{ row: 4, col: 4 }, { row: 0, col: 4 }, { row: 0, col: 2 }, { row: 3, col: 1 }],
+    par: 3,
+  },
+  '2026-08-29': {
+    size: 5,
+    source: { row: 0, col: 2, dir: 'down' },
+    target: { row: 4, col: 0 },
+    fixed: [{ row: 0, col: 3, type: 'wall' }],
+    slots: [{ row: 3, col: 4 }, { row: 3, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 1 }, { row: 2, col: 0 }],
+    par: 4,
+  },
+  '2026-08-30': {
+    size: 5,
+    source: { row: 4, col: 0, dir: 'right' },
+    target: { row: 1, col: 4 },
+    fixed: [{ row: 3, col: 0, type: 'wall' }],
+    slots: [{ row: 4, col: 2 }, { row: 0, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }],
+    par: 3,
+  },
+};
+
+export default puzzles;
