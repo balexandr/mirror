@@ -71,7 +71,14 @@ export default function MirrorGrid({ puzzle, mirrors, beam, gameStatus, poppedSl
           ))}
         </svg>
 
-        <div className={styles.grid} style={{ gridTemplateColumns: `repeat(${size}, 1fr)`, gridTemplateRows: `repeat(${size}, 1fr)` }}>
+        <div
+          className={styles.grid}
+          style={{
+            gridTemplateColumns: `repeat(${size}, 1fr)`,
+            gridTemplateRows: `repeat(${size}, 1fr)`,
+            gap: size >= 7 ? '4px' : '6px',
+          }}
+        >
           {Array.from({ length: size }).map((_, r) =>
             Array.from({ length: size }).map((__, c) => {
               const key = cellKey(r, c);

@@ -152,3 +152,25 @@ What actually shipped, and where it differs from the spec above:
   triple rather than a separate "edge" enum — `dir` alone (which way
   the beam travels on entry) is enough to know which board edge it's
   on and to compute the entry-arrow placement in the UI.
+
+## Difficulty pass (2026-08-17, later same day)
+
+Day 1 (par 1, single slot) was "way too easy." Bumped difficulty
+across the whole set, not just day one:
+
+- **Grid: 5×5 → 7×7.** More room for longer, twistier paths. Cell
+  gap drops to 4px at size ≥ 7 (was 6px) to keep tap targets
+  comfortable at the smaller cell size — see the inline `gap` in
+  `MirrorGrid.jsx`, everything else in the CSS is already
+  size-agnostic (`gridTemplateColumns`/`Rows` computed from
+  `puzzle.size`).
+- **Par curve raised**: 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 4, 5, 5, 6
+  (was 1, 1, 2, 2, 2, 2, 3, 2, 3, 3, 2, 3, 4, 3). 4–7 slots per
+  puzzle and 1–3 walls, up from 1–5 slots / 0–1 walls.
+- All 14 regenerated puzzles re-verified the same way as before:
+  brute force over every slot-orientation combination confirms the
+  stated `par` is the true minimum and that 0 mirrors never wins.
+- Replayed puzzle #1's actual minimal solution end-to-end in a
+  headless browser after the change to confirm the win path still
+  fires correctly at the new size (it does — "Perfect beam!" at
+  2/2 mirrors).
