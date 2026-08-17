@@ -56,7 +56,10 @@ export default function MirrorGrid({ puzzle, mirrors, beam, gameStatus, poppedSl
       {entry && (
         <span
           className={`${styles.entryArrow} ${styles[`side${entry.side[0].toUpperCase()}${entry.side.slice(1)}`]}`}
-          style={{ [entry.side === 'top' || entry.side === 'bottom' ? 'left' : 'top']: `${entry.pos}%` }}
+          style={{
+            [entry.side === 'top' || entry.side === 'bottom' ? 'left' : 'top']: `${entry.pos}%`,
+            pointerEvents: 'none',
+          }}
           aria-hidden="true"
         >
           {entry.glyph}
@@ -64,12 +67,17 @@ export default function MirrorGrid({ puzzle, mirrors, beam, gameStatus, poppedSl
       )}
 
       <div className={styles.gridWrap}>
-        <svg className={styles.beamSvg} aria-hidden="true">
+        {/* pointerEvents set both here (belt) and in CSS (suspenders) — this
+            overlay spans the whole board, so if a browser doesn't inherit
+            `pointer-events: none` from <svg> onto <line> the way Chromium
+            does, every click anywhere on the grid gets silently swallowed. */}
+        <svg className={styles.beamSvg} pointerEvents="none" aria-hidden="true">
           {beamSegments.map((seg, i) => (
             <line
               key={i}
               x1={`${seg.from.x}%`} y1={`${seg.from.y}%`}
               x2={`${seg.to.x}%`} y2={`${seg.to.y}%`}
+              pointerEvents="none"
               className={`${styles.beamLine} ${won ? styles.beamLineWon : ''}`}
             />
           ))}
