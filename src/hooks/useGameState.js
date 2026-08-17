@@ -15,12 +15,30 @@ function starsFor(used, par) {
   return 1;
 }
 
-function loadState(dateKey) {
+// A cheap content fingerprint for a puzzle — not cryptographic, just enough
+// to detect "this isn't the same puzzle anymore" if a day's puzzle is ever
+// edited after someone has already played it (which happened during tuning:
+// today's puzzle changed shape three times under the same date key, and
+// without this a stale "won" save from an earlier version silently locks
+// every slot in the new one, with no visible error — it just looks dead).
+function fingerprint(puzzle) {
+  return JSON.stringify({
+    size: puzzle.size,
+    source: puzzle.source,
+    target: puzzle.target,
+    fixed: puzzle.fixed,
+    slots: puzzle.slots,
+    par: puzzle.par,
+  });
+}
+
+function loadState(dateKey, puzzle) {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw);
     if (saved.dateKey !== dateKey) return null;
+    if (saved.puzzleFingerprint !== fingerprint(puzzle)) return null;
     return saved;
   } catch { return null; }
 }
@@ -42,7 +60,7 @@ export function useGameState() {
 
   useEffect(() => {
     if (!puzzle) { setInitialized(true); return; }
-    const saved = loadState(dateKey);
+    const saved = loadState(dateKey, puzzle);
     if (saved) {
       setMirrors(saved.mirrors || {});
       setGameStatus(saved.gameStatus || 'playing');
@@ -53,7 +71,7 @@ export function useGameState() {
 
   useEffect(() => {
     if (!initialized || !puzzle) return;
-    saveState({ dateKey, mirrors, gameStatus, mirrorsUsedAtWin });
+    saveState({ dateKey, puzzleFingerprint: fingerprint(puzzle), mirrors, gameStatus, mirrorsUsedAtWin });
   }, [mirrors, gameStatus, mirrorsUsedAtWin, initialized]);
 
   const beam = useMemo(() => {

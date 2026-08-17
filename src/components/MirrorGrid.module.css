@@ -45,6 +45,13 @@
   aspect-ratio: 1 / 1;
   border-radius: 12px;
   overflow: hidden;
+  /* Without this, a real trackpad click's tiny bit of cursor drift between
+     mousedown and mouseup can get interpreted as a text/element selection
+     drag instead of a click, which cancels the click event outright — the
+     tile hovers fine (that's pure CSS) but never registers a tap. */
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 
   background:
     repeating-linear-gradient(
