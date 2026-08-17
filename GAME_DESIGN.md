@@ -1,6 +1,7 @@
 # Mirror — Game Design & Technical Guide
 
-Status: **designed, not built** (as of 2026-08-17)
+Status: **built** (2026-08-17) — see Implementation Notes at the bottom
+for what changed from the original spec below.
 
 ## Concept
 
@@ -118,3 +119,36 @@ beam itself.
 - Undo / reset button, or is cycling a mirror back to empty enough?
 - Does hub `games.js` get an entry now (status: "coming soon") or only
   once built? (Other in-progress games aren't listed there yet either.)
+
+## Implementation Notes (2026-08-17)
+
+What actually shipped, and where it differs from the spec above:
+
+- **Went with 5×5.** Reads fine at 420px mobile width with 6px gaps.
+- **Single-target only** — matches the spec, no multi-target puzzles yet.
+- **Added a `slots` field to puzzle data** — the biggest deviation.
+  Originally *every* non-fixed cell was tappable. In practice that's
+  25 tappable cells with only 2–4 that matter, which is noisy and
+  makes brute-force par-verification (3^n combos) intractable for
+  n≈20. Puzzles now declare an explicit `slots: [{row,col}, ...]`
+  list — only those cells cycle `empty → "/" → "\" → empty`; every
+  other non-fixed cell is inert floor the beam just passes through.
+  This reads better (dashed border = "you can act here") and keeps
+  brute force at 3^(slot count), fully tractable.
+- **`par` is not asserted, it's computed.** Every shipped puzzle was
+  brute-force solved by `scripts` run during authoring (see
+  `src/utils/beam.js`'s `simulateBeam`, exercised against every
+  combination of slot orientations) to find the *true* minimum
+  mirror count — not just a number that happens to solve it. Also
+  verified 0 mirrors never wins (no puzzle is accidentally trivial).
+- **Reset button**, not undo — clears all placed mirrors at once.
+  Simpler, and cycling a single slot back to empty covers the
+  single-mistake case already.
+- Added to `noodle_games` hub `games.js` and every sibling game's
+  `shareAll.js` roster immediately on build (not deferred) — the hub
+  listing already contained other actively-developed games, so
+  "wait until built" turned out to mean "wait until this commit."
+- Source direction/edge is derived from a single `{row, col, dir}`
+  triple rather than a separate "edge" enum — `dir` alone (which way
+  the beam travels on entry) is enough to know which board edge it's
+  on and to compute the entry-arrow placement in the UI.
