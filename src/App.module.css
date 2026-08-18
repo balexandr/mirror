@@ -111,6 +111,13 @@
   align-self: flex-start;
 }
 
+.twoBeamNote {
+  font-size: 0.76rem;
+  color: #2dd4bf;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
 /* ── HUD ── */
 .hud {
   width: 100%;

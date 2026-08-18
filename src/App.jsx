@@ -19,8 +19,11 @@ export default function App() {
     dateKey,
     mirrors,
     lastFiredBeam,
+    lastFiredBeam2,
     solution,
     solutionBeam,
+    solutionBeam2,
+    twoBeam,
     gameStatus,
     initialized,
     firedCount,
@@ -138,6 +141,7 @@ export default function App() {
   const displayMirrors = gameStatus === 'lost' && solution ? solution : mirrors;
   const beamStyle = gameStatus === 'won' ? 'win' : gameStatus === 'lost' ? 'lost' : 'ghost';
   const displayBeam = gameStatus === 'lost' && solutionBeam ? solutionBeam : lastFiredBeam;
+  const displayBeam2 = gameStatus === 'lost' && solutionBeam2 ? solutionBeam2 : lastFiredBeam2;
 
   return (
     <div className={styles.container}>
@@ -169,11 +173,15 @@ export default function App() {
           puzzle={puzzle}
           mirrors={displayMirrors}
           beam={displayBeam}
+          beam2={displayBeam2}
           beamStyle={beamStyle}
           interactive={interactive}
           poppedSlot={poppedSlot}
           onToggleSlot={toggleSlot}
         />
+        {twoBeam && interactive && (
+          <p className={styles.twoBeamNote}>Two beams share these mirrors — both must land</p>
+        )}
 
         <div className={styles.hud}>
           <span className={styles.hudCount}>

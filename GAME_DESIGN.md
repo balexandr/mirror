@@ -303,3 +303,43 @@ in the DOM), a wrong shot leaving a dim ghost trace with fires
 decrementing correctly, an actual par-3 solve won on fire 1/5, and a
 deliberate 5-fire loss correctly revealing the solution in green on
 the board underneath the result modal.
+
+## Two-beam mode (2026-08-18)
+
+Still "too simple" even with hidden beam + limited fires — asked the
+user for a real design fork (new mechanic vs. push numbers further)
+and they picked two beams sharing one board: a second source/target
+pair gets added to a puzzle, and the SAME mirror layout has to route
+BOTH beams to their own targets at once. A placement that helps beam A
+can wreck beam B — that shared constraint, not bigger numbers, is what
+makes these genuinely harder to plan.
+
+Chose this over beam-splitter tiles specifically because it reuses the
+verified single-beam engine untouched: `simulateBeam(puzzle, mirrors,
+source, target)` now takes an optional source/target override
+(defaults to `puzzle.source`/`puzzle.target`), so a two-beam puzzle is
+just two calls against the same mirrors, no branching-path logic
+needed anywhere. `isSolved(puzzle, mirrors)` is the one new piece of
+truth — beam 1 must win, and beam 2 must win too if `source2`/`target2`
+are present — and everything else (par brute force, `findSolution`,
+the fire/loss loop) was rewritten in terms of `isSolved` instead of a
+raw `simulateBeam(...).result === 'win'` check, so one-beam and
+two-beam puzzles need zero special-casing anywhere but the renderer.
+
+- Puzzle data: optional `source2`/`target2` fields, same shape as
+  `source`/`target`. Absent = ordinary single-beam puzzle.
+- `MirrorGrid` renders a second source/target pair (teal, vs. the
+  primary's indigo/white) and a second beam trace with its own ghost
+  color, so the two beams are never visually ambiguous.
+- Day 1 (2026-08-17, already played) was left untouched. Days 2-14
+  regenerated: day 1 stays single-beam, days 2-14 are all two-beam,
+  par climbing roughly 4→8 (some day-to-day wobble is normal, not a
+  bug — see the note on this from the first difficulty pass).
+- Verified with the real puzzle for 2026-08-18 (today, live): both
+  markers render (`Light source A/B`, `Target A/B` aria-labels each
+  found exactly once), the actual brute-forced 5-mirror solution wins
+  on fire 1/5, and — the important negative case — firing with only
+  beam A's mirrors placed does NOT win; it correctly stays in
+  `'playing'` with fires ticking down, showing beam A's ghost trace
+  reaching its target while beam B's ghost trace sails past its own,
+  untouched.

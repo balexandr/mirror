@@ -38,6 +38,14 @@
 .sideLeft { left: 2px; transform: translateY(-50%); }
 .sideRight { right: 2px; transform: translateY(-50%); }
 
+/* Beam B (two-beam puzzles only) gets its own hue throughout so the two
+   beams are never ambiguous — same teal used for its ghost trace and its
+   source/target tint below. */
+.entryArrow2 {
+  color: #2dd4bf;
+  text-shadow: 0 0 8px rgba(45, 212, 191, 0.55), 0 0 16px rgba(45, 212, 191, 0.35);
+}
+
 /* ── Playing surface ──────────────────────────────────────────── */
 .gridWrap {
   position: relative;
@@ -92,6 +100,16 @@
   filter:
     drop-shadow(0 0 3px var(--accent))
     drop-shadow(0 0 8px rgba(99, 102, 241, 0.2));
+}
+
+/* Beam B's ghost trace, while still playing — teal instead of indigo so two
+   simultaneous shots are never confused for one broken path. */
+.beamLineGhost2 {
+  stroke: #2dd4bf;
+  opacity: 0.45;
+  filter:
+    drop-shadow(0 0 3px #2dd4bf)
+    drop-shadow(0 0 8px rgba(45, 212, 191, 0.2));
 }
 
 .beamLineWon {
@@ -237,6 +255,32 @@
 .target {
   color: var(--win);
   border-color: rgba(251, 191, 36, 0.4);
+}
+
+/* Beam B's source/target — same shapes, teal instead of indigo/gold so the
+   two beams' endpoints are never confused for one puzzle's stray markers. */
+.source.beam2Marker {
+  border-color: rgba(45, 212, 191, 0.55);
+  box-shadow:
+    inset 1px 1px 0 rgba(45, 212, 191, 0.2),
+    0 0 14px rgba(45, 212, 191, 0.3);
+}
+
+.source.beam2Marker .sourceGlyph {
+  background: #2dd4bf;
+  box-shadow: 0 0 8px #2dd4bf, 0 0 18px rgba(45, 212, 191, 0.4);
+}
+
+.target.beam2Marker {
+  color: #2dd4bf;
+  border-color: rgba(45, 212, 191, 0.4);
+}
+
+.target.beam2Marker.targetHit {
+  border-color: rgba(45, 212, 191, 0.75);
+  box-shadow:
+    inset 1px 1px 0 rgba(45, 212, 191, 0.25),
+    0 0 18px rgba(45, 212, 191, 0.4);
 }
 
 .targetHit {

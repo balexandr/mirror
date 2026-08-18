@@ -18,15 +18,21 @@ function cellKey(row, col) {
 }
 
 /**
- * Simulate the beam through a puzzle given the player's current mirror
- * placements in the interactive slots.
+ * Simulate one beam through a puzzle given the player's current mirror
+ * placements in the interactive slots. Source/target default to the
+ * puzzle's primary pair (`puzzle.source`/`puzzle.target`) but can be
+ * overridden — this is how two-beam puzzles work: the same board, walls,
+ * fixed mirrors, and slot mirrors are shared, and this function just gets
+ * called twice with `puzzle.source2`/`puzzle.target2` for the second beam.
  *
- * @param {object} puzzle - { size, source: {row,col,dir}, target: {row,col}, fixed: [{row,col,type,orientation}] }
+ * @param {object} puzzle - { size, source, target, source2?, target2?, fixed: [{row,col,type,orientation}] }
  * @param {Record<string, '/'|'\\'>} mirrors - slot key -> orientation (absent/undefined = empty slot)
+ * @param {{row:number,col:number,dir:string}} [source] - defaults to puzzle.source
+ * @param {{row:number,col:number}} [target] - defaults to puzzle.target
  * @returns {{ cells: {row:number,col:number}[], result: 'win'|'wall'|'open'|'loop' }}
  */
-export function simulateBeam(puzzle, mirrors) {
-  const { size, source, target, fixed = [] } = puzzle;
+export function simulateBeam(puzzle, mirrors, source = puzzle.source, target = puzzle.target) {
+  const { size, fixed = [] } = puzzle;
   const fixedMap = {};
   for (const f of fixed) fixedMap[cellKey(f.row, f.col)] = f;
 
@@ -71,6 +77,25 @@ export function simulateBeam(puzzle, mirrors) {
   return { cells, result };
 }
 
+export function isTwoBeamPuzzle(puzzle) {
+  return Boolean(puzzle.source2 && puzzle.target2);
+}
+
+/**
+ * A puzzle counts as solved when its primary beam reaches its target — and,
+ * for a two-beam puzzle, the second beam reaches ITS target too, with the
+ * exact same mirror layout. That shared-constraint requirement (one set of
+ * mirrors has to work for both beams at once) is the whole difficulty of
+ * the mode, not anything special in the simulation itself.
+ */
+export function isSolved(puzzle, mirrors) {
+  if (simulateBeam(puzzle, mirrors, puzzle.source, puzzle.target).result !== 'win') return false;
+  if (isTwoBeamPuzzle(puzzle)) {
+    if (simulateBeam(puzzle, mirrors, puzzle.source2, puzzle.target2).result !== 'win') return false;
+  }
+  return true;
+}
+
 export function mirrorCount(mirrors) {
   return Object.values(mirrors).filter((v) => v === '/' || v === '\\').length;
 }
@@ -85,7 +110,8 @@ export function cycleOrientation(current) {
 // scripts use to verify par) — used for the loss-reveal screen, computed
 // client-side on demand rather than baked into puzzle data, since it's cheap
 // (3^slots, slots is always small) and never needs to ship to the browser
-// as a spoiler sitting in the puzzle JSON.
+// as a spoiler sitting in the puzzle JSON. Uses isSolved, so it works the
+// same way for one- and two-beam puzzles without any special-casing here.
 export function findSolution(puzzle) {
   const slots = puzzle.slots;
   const n = slots.length;
@@ -103,7 +129,7 @@ export function findSolution(puzzle) {
       if (o) { mirrors[cellKey(slots[i].row, slots[i].col)] = o; count++; }
     }
     if (count >= bestCount) continue;
-    if (simulateBeam(puzzle, mirrors).result === 'win') {
+    if (isSolved(puzzle, mirrors)) {
       best = mirrors;
       bestCount = count;
     }

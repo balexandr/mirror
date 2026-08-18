@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import puzzles from '../data/puzzles.js';
-import { simulateBeam, mirrorCount, cycleOrientation, findSolution } from '../utils/beam.js';
+import { simulateBeam, isSolved, isTwoBeamPuzzle, mirrorCount, cycleOrientation, findSolution } from '../utils/beam.js';
 
 const STORAGE_KEY = 'mirror-game-state';
 const EPOCH = '2026-08-17';
@@ -31,6 +31,8 @@ function fingerprint(puzzle) {
     size: puzzle.size,
     source: puzzle.source,
     target: puzzle.target,
+    source2: puzzle.source2,
+    target2: puzzle.target2,
     fixed: puzzle.fixed,
     slots: puzzle.slots,
     par: puzzle.par,
@@ -100,16 +102,25 @@ export function useGameState() {
     });
   }, [mirrors, lastFiredMirrors, firedCount, firesUsedAtWin, mirrorsUsedAtWin, gameStatus, initialized]);
 
+  const twoBeam = puzzle ? isTwoBeamPuzzle(puzzle) : false;
+
   // The trace of the last committed shot — null before any fire, so the
-  // grid genuinely shows nothing until the player commits.
+  // grid genuinely shows nothing until the player commits. Beam 2 stays
+  // null for ordinary single-beam puzzles.
   const lastFiredBeam = useMemo(() => {
     if (!puzzle || !lastFiredMirrors) return null;
-    return simulateBeam(puzzle, lastFiredMirrors);
+    return simulateBeam(puzzle, lastFiredMirrors, puzzle.source, puzzle.target);
   }, [puzzle, lastFiredMirrors]);
+
+  const lastFiredBeam2 = useMemo(() => {
+    if (!puzzle || !lastFiredMirrors || !twoBeam) return null;
+    return simulateBeam(puzzle, lastFiredMirrors, puzzle.source2, puzzle.target2);
+  }, [puzzle, lastFiredMirrors, twoBeam]);
 
   // Only computed on a loss, and only ever for the reveal screen — cheap
   // brute force, see findSolution's own comment for why this isn't
-  // pre-baked into puzzle data.
+  // pre-baked into puzzle data. findSolution already requires BOTH beams
+  // to win for a two-beam puzzle (via isSolved), so no special-casing here.
   const solution = useMemo(() => {
     if (!puzzle || gameStatus !== 'lost') return null;
     return findSolution(puzzle);
@@ -117,8 +128,13 @@ export function useGameState() {
 
   const solutionBeam = useMemo(() => {
     if (!puzzle || !solution) return null;
-    return simulateBeam(puzzle, solution);
+    return simulateBeam(puzzle, solution, puzzle.source, puzzle.target);
   }, [puzzle, solution]);
+
+  const solutionBeam2 = useMemo(() => {
+    if (!puzzle || !solution || !twoBeam) return null;
+    return simulateBeam(puzzle, solution, puzzle.source2, puzzle.target2);
+  }, [puzzle, solution, twoBeam]);
 
   const toggleSlot = useCallback((row, col) => {
     if (!puzzle || gameStatus !== 'playing') return;
@@ -137,11 +153,13 @@ export function useGameState() {
   const fireBeam = useCallback(() => {
     if (!puzzle || gameStatus !== 'playing') return;
     const snapshot = { ...mirrors };
-    const result = simulateBeam(puzzle, snapshot).result;
+    // isSolved checks both beams for a two-beam puzzle — same mirror layout
+    // has to route each beam to its own target simultaneously.
+    const won = isSolved(puzzle, snapshot);
     const newFiredCount = firedCount + 1;
     setLastFiredMirrors(snapshot);
     setFiredCount(newFiredCount);
-    if (result === 'win') {
+    if (won) {
       setGameStatus('won');
       setMirrorsUsedAtWin(mirrorCount(snapshot));
       setFiresUsedAtWin(newFiredCount);
@@ -173,8 +191,11 @@ export function useGameState() {
     dateKey,
     mirrors,
     lastFiredBeam,
+    lastFiredBeam2,
     solution,
     solutionBeam,
+    solutionBeam2,
+    twoBeam,
     gameStatus,
     initialized,
     firedCount,
