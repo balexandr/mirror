@@ -9,7 +9,7 @@ export default function HowToPlay({ onClose }) {
 
         <p className={styles.intro}>
           A beam of light enters the grid. Tap the dashed cells to place
-          mirrors and bend the beam until it hits the target.
+          mirrors — but the beam stays hidden until you commit to it.
         </p>
 
         <div className={styles.example}>
@@ -32,17 +32,17 @@ export default function HowToPlay({ onClose }) {
         </div>
 
         <ul className={styles.rules}>
-          <li>The beam re-routes live — no submit button</li>
-          <li>Reach the target in as few mirrors as possible</li>
-          <li>No wrong answers, no fail state — just optimize your score</li>
-          <li>3 stars at par, 2 for a couple over, 1 for any solve</li>
+          <li>Plan your mirrors, then press <strong>Fire Beam</strong> to see where the light actually goes</li>
+          <li>A fired shot leaves a dim trace so you can adjust and fire again</li>
+          <li>5 fires per puzzle — like guesses. Run out, and it's a loss for the day</li>
+          <li>Fewer fires to solve it = more stars</li>
           <li>A new puzzle every day</li>
         </ul>
 
         <div className={styles.legend}>
-          <span>💡💡💡 At or under par</span>
-          <span>💡💡⚫ A little over</span>
-          <span>💡⚫⚫ Solved, well over</span>
+          <span>💡💡💡 Solved in 1–2 fires</span>
+          <span>💡💡⚫ Solved in 3</span>
+          <span>💡⚫⚫ Solved in 4–5</span>
         </div>
 
         <button className={styles.playBtn} onClick={onClose}>Got it — let's play</button>

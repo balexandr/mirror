@@ -77,16 +77,21 @@
 }
 
 .beamLine {
-  stroke: var(--beam);
   stroke-width: 5px;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.85;
+}
+
+/* The beam is hidden until "Fire Beam" is pressed — this is the trace of
+   the LAST shot, shown dim while still playing so a fired attempt gives
+   real feedback without live-updating on every tap (that live redraw was
+   the whole reason the game played too easy before). */
+.beamLineGhost {
+  stroke: var(--beam);
+  opacity: 0.45;
   filter:
-    drop-shadow(0 0 4px var(--accent))
-    drop-shadow(0 0 12px var(--beam-glow))
-    drop-shadow(0 0 22px rgba(99, 102, 241, 0.25));
-  animation: beamPulse 2.2s ease-in-out infinite;
+    drop-shadow(0 0 3px var(--accent))
+    drop-shadow(0 0 8px rgba(99, 102, 241, 0.2));
 }
 
 .beamLineWon {
@@ -96,7 +101,18 @@
     drop-shadow(0 0 5px var(--win))
     drop-shadow(0 0 16px var(--win-glow))
     drop-shadow(0 0 30px rgba(251, 191, 36, 0.3));
-  animation: none;
+  animation: beamPulse 2s ease-in-out infinite;
+}
+
+/* Answer reveal on a loss — deliberately a different hue from both the win
+   gold and the ghost indigo, so it reads as "here's the answer," not
+   "you won." */
+.beamLineSolution {
+  stroke: #34d399;
+  opacity: 0.9;
+  filter:
+    drop-shadow(0 0 4px #34d399)
+    drop-shadow(0 0 14px rgba(52, 211, 153, 0.4));
 }
 
 /* ── Grid ─────────────────────────────────────────────────────── */

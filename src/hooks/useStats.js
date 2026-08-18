@@ -5,9 +5,11 @@ const STATS_KEY = 'mirror-stats';
 function getDefaultStats() {
   return {
     gamesPlayed: 0,
+    gamesWon: 0,
     currentStreak: 0,
     maxStreak: 0,
-    distribution: { 1: 0, 2: 0, 3: 0 },
+    // 0 = lost (out of fires without solving), 1-3 = star rating on a win.
+    distribution: { 0: 0, 1: 0, 2: 0, 3: 0 },
     lastCompletedDate: null,
   };
 }
@@ -34,19 +36,28 @@ function isConsecutiveDay(dateA, dateB) {
 export function useStats() {
   const [stats, setStats] = useState(loadStats);
 
-  const recordGame = useCallback((dateKey, stars) => {
+  // outcome: 'won' | 'lost'. stars only matters when outcome is 'won'.
+  const recordGame = useCallback((dateKey, outcome, stars) => {
     setStats((prev) => {
       if (prev.lastCompletedDate === dateKey) return prev;
       const next = { ...prev, distribution: { ...prev.distribution } };
       next.gamesPlayed += 1;
-      next.distribution[stars] = (next.distribution[stars] || 0) + 1;
+      const bucket = outcome === 'won' ? stars : 0;
+      next.distribution[bucket] = (next.distribution[bucket] || 0) + 1;
 
-      if (isConsecutiveDay(prev.lastCompletedDate, dateKey) || prev.gamesPlayed === 0) {
-        next.currentStreak = prev.currentStreak + 1;
+      if (outcome === 'won') {
+        next.gamesWon += 1;
+        if (isConsecutiveDay(prev.lastCompletedDate, dateKey) || prev.gamesPlayed === 0) {
+          next.currentStreak = prev.currentStreak + 1;
+        } else {
+          next.currentStreak = 1;
+        }
+        next.maxStreak = Math.max(next.maxStreak, next.currentStreak);
       } else {
-        next.currentStreak = 1;
+        // A loss breaks the streak outright — you didn't solve today,
+        // same as missing a day entirely.
+        next.currentStreak = 0;
       }
-      next.maxStreak = Math.max(next.maxStreak, next.currentStreak);
       next.lastCompletedDate = dateKey;
 
       saveStats(next);
@@ -54,9 +65,13 @@ export function useStats() {
     });
   }, []);
 
+  const winPct = stats.gamesPlayed > 0
+    ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
+    : 0;
+
   const avgStars = stats.gamesPlayed > 0
     ? ((stats.distribution[1] * 1 + stats.distribution[2] * 2 + stats.distribution[3] * 3) / stats.gamesPlayed).toFixed(1)
     : '0.0';
 
-  return { stats, avgStars, recordGame };
+  return { stats, winPct, avgStars, recordGame };
 }

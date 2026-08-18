@@ -1,6 +1,6 @@
 import styles from './StatsScreen.module.css';
 
-export default function StatsScreen({ stats, avgStars, onClose }) {
+export default function StatsScreen({ stats, winPct, avgStars, onClose }) {
   const maxDist = Math.max(...Object.values(stats.distribution), 1);
 
   return (
@@ -12,11 +12,11 @@ export default function StatsScreen({ stats, avgStars, onClose }) {
         <div className={styles.statsRow}>
           <div className={styles.stat}>
             <span className={styles.statValue}>{stats.gamesPlayed}</span>
-            <span className={styles.statLabel}>Solved</span>
+            <span className={styles.statLabel}>Played</span>
           </div>
           <div className={styles.stat}>
-            <span className={styles.statValue}>{avgStars}</span>
-            <span className={styles.statLabel}>Avg ★</span>
+            <span className={styles.statValue}>{winPct}%</span>
+            <span className={styles.statLabel}>Solved</span>
           </div>
           <div className={styles.stat}>
             <span className={styles.statValue}>{stats.currentStreak}</span>
@@ -28,17 +28,17 @@ export default function StatsScreen({ stats, avgStars, onClose }) {
           </div>
         </div>
 
-        <h3 className={styles.distTitle}>Star Ratings</h3>
+        <h3 className={styles.distTitle}>Fires to Solve</h3>
         <div className={styles.distribution}>
-          {[3, 2, 1].map((n) => {
+          {[3, 2, 1, 0].map((n) => {
             const count = stats.distribution[n] || 0;
             const pct = Math.round((count / maxDist) * 100);
             return (
               <div key={n} className={styles.distRow}>
-                <span className={styles.distLabel}>{'★'.repeat(n)}</span>
+                <span className={styles.distLabel}>{n === 0 ? 'X' : '★'.repeat(n)}</span>
                 <div className={styles.barTrack}>
                   <div
-                    className={styles.bar}
+                    className={`${styles.bar} ${n === 0 ? styles.barLost : ''}`}
                     style={{ width: `${Math.max(pct, count > 0 ? 8 : 0)}%` }}
                   >
                     <span className={styles.barCount}>{count}</span>
@@ -48,6 +48,7 @@ export default function StatsScreen({ stats, avgStars, onClose }) {
             );
           })}
         </div>
+        <p className={styles.avgStarsNote}>Average {avgStars}★ per solve</p>
       </div>
     </div>
   );

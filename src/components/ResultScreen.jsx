@@ -10,15 +10,20 @@ const HEADLINES = {
 export default function ResultScreen({
   puzzle,
   puzzleNumber,
+  outcome, // 'won' | 'lost'
   stars,
+  firesUsed,
+  maxFires,
   mirrorsUsed,
   generateShareText,
   stats,
+  winPct,
   avgStars,
   onDismiss,
 }) {
   const [copied, setCopied] = useState(false);
   const shareText = generateShareText();
+  const won = outcome === 'won';
 
   useEffect(() => {
     if (copied) {
@@ -56,32 +61,40 @@ export default function ResultScreen({
         <button className={styles.closeBtn} onClick={onDismiss} aria-label="Close">✕</button>
 
         <div className={styles.topSection}>
-          <div className={styles.emoji}>{stars === 3 ? '✨' : stars === 2 ? '💡' : '🔦'}</div>
-          <h2 className={styles.headline}>{HEADLINES[stars]}</h2>
+          <div className={styles.emoji}>{won ? (stars === 3 ? '✨' : stars === 2 ? '💡' : '🔦') : '💥'}</div>
+          <h2 className={styles.headline}>{won ? HEADLINES[stars] : 'Out of fires'}</h2>
           <p className={styles.puzzleNum}>Mirror #{puzzleNumber}</p>
         </div>
 
-        <div className={styles.starsRow}>
-          {[1, 2, 3].map((n) => (
-            <span key={n} className={n <= stars ? styles.starOn : styles.starOff}>
-              {n <= stars ? '💡' : '⚫'}
-            </span>
-          ))}
-        </div>
-
-        <p className={styles.mirrorLine}>
-          Solved with <strong>{mirrorsUsed}</strong> mirror{mirrorsUsed === 1 ? '' : 's'}
-          {' '}<span className={styles.par}>(par {puzzle.par})</span>
-        </p>
+        {won ? (
+          <>
+            <div className={styles.starsRow}>
+              {[1, 2, 3].map((n) => (
+                <span key={n} className={n <= stars ? styles.starOn : styles.starOff}>
+                  {n <= stars ? '💡' : '⚫'}
+                </span>
+              ))}
+            </div>
+            <p className={styles.mirrorLine}>
+              Fired <strong>{firesUsed}/{maxFires}</strong> times
+              {' '}<span className={styles.par}>({mirrorsUsed} mirror{mirrorsUsed === 1 ? '' : 's'}, par {puzzle.par})</span>
+            </p>
+          </>
+        ) : (
+          <p className={styles.mirrorLine}>
+            Used all <strong>{maxFires}</strong> fires without reaching the target.
+            {' '}<span className={styles.par}>Solution shown on the board.</span>
+          </p>
+        )}
 
         <div className={styles.statsRow}>
           <div className={styles.stat}>
             <span className={styles.statValue}>{stats.gamesPlayed}</span>
-            <span className={styles.statLabel}>Solved</span>
+            <span className={styles.statLabel}>Played</span>
           </div>
           <div className={styles.stat}>
-            <span className={styles.statValue}>{avgStars}</span>
-            <span className={styles.statLabel}>Avg ★</span>
+            <span className={styles.statValue}>{winPct}%</span>
+            <span className={styles.statLabel}>Solved</span>
           </div>
           <div className={styles.stat}>
             <span className={styles.statValue}>{stats.currentStreak}</span>

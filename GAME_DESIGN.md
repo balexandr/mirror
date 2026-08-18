@@ -255,3 +255,51 @@ ever appending new dates. The fingerprint check makes it safe now,
 but the instinct going forward should still be to add new puzzles
 rather than mutate a date that might already be in someone's
 `localStorage`.
+
+## Mechanic pivot: hidden beam + limited fires (2026-08-17, night)
+
+Bug fixed, board now genuinely playable — and immediately "still too
+easy," a fourth time, despite par having gone from 1 to 3-8 across
+three straight difficulty passes. The numbers weren't the problem.
+The mechanic was: live beam redraw on every tap turns the puzzle into
+a scanner — nudge a mirror, watch the light react, converge by
+trial-and-error. No amount of par or board size fixes that, because
+the feedback loop does the planning for you.
+
+Real fix, not another number bump:
+
+- **The beam is now hidden until you commit.** Tapping a slot still
+  cycles its mirror and is always visible (spatial memory of your own
+  plan is fair), but no beam trace renders at all until you press the
+  new **Fire Beam** button.
+- **Fires are capped at 5** (`MAX_FIRES` in `useGameState.js`), same
+  shape as Wordle-style guess limits. Each fire snapshots the current
+  mirror layout, simulates it, and reveals the trace as a result —
+  win, or a dim "ghost" trace of that attempt while you adjust and
+  fire again.
+- **Real fail state, for the first time.** Out of fires without
+  solving = loss for the day, board locks, come back tomorrow. Every
+  previous version of Mirror had no fail state by design (see the
+  original spec above) — that design was directly part of why it kept
+  reading as easy, so it's gone.
+- **Stars now reward fires, not mirrors.** 3★ solved in ≤2 fires, 2★
+  in 3, 1★ in 4-5. Mirror-count par is still brute-force verified and
+  shown as a bonus stat in the result screen, but it no longer gates
+  the rating — the hard part is committing to a correct plan early,
+  not shaving mirrors off an already-known-working layout.
+- **Loss reveals a real solution**, computed live in-browser
+  (`findSolution` in `beam.js`, same brute-force search the puzzle
+  generator uses for par) and drawn on the board in a third beam
+  color (green) distinct from both the indigo ghost and the gold win
+  trace — not baked into puzzle data as a spoiler sitting in the JSON,
+  computed on demand only when `gameStatus === 'lost'`.
+- Stats gained an outcome dimension: `distribution[0]` is now losses
+  (shown as "X" like Wordle), 1-3 are star counts on a win. Streak
+  breaks to 0 on a loss, same as missing a day.
+
+Verified all four render states in a real headless browser end to
+end, not just built: beam fully absent pre-fire (0 `<line>` elements
+in the DOM), a wrong shot leaving a dim ghost trace with fires
+decrementing correctly, an actual par-3 solve won on fire 1/5, and a
+deliberate 5-fire loss correctly revealing the solution in green on
+the board underneath the result modal.

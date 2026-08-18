@@ -18,19 +18,26 @@ export default function App() {
     puzzleNumber,
     dateKey,
     mirrors,
-    beam,
+    lastFiredBeam,
+    solution,
+    solutionBeam,
     gameStatus,
     initialized,
+    firedCount,
+    firesRemaining,
+    maxFires,
+    firesUsedAtWin,
     mirrorsUsedAtWin,
     stars,
     poppedSlot,
     toggleSlot,
+    fireBeam,
     reset,
     generateShareText,
     currentMirrorCount,
   } = useGameState();
 
-  const { stats, avgStars, recordGame } = useStats();
+  const { stats, winPct, avgStars, recordGame } = useStats();
 
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -51,8 +58,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (gameStatus === 'won') {
-      recordGame(dateKey, stars);
+    if (gameStatus === 'won' || gameStatus === 'lost') {
+      recordGame(dateKey, gameStatus, stars);
       recordTodayShare('mirror', dateKey, generateShareText());
       const t = setTimeout(() => setShowResult(true), 500);
       return () => clearTimeout(t);
@@ -124,6 +131,14 @@ export default function App() {
     );
   }
 
+  const interactive = gameStatus === 'playing';
+  // What the grid actually renders: your own placement while playing, the
+  // revealed solution's layout on a loss (the ghost trace + your own final,
+  // wrong guess isn't nearly as useful as just showing the answer).
+  const displayMirrors = gameStatus === 'lost' && solution ? solution : mirrors;
+  const beamStyle = gameStatus === 'won' ? 'win' : gameStatus === 'lost' ? 'lost' : 'ghost';
+  const displayBeam = gameStatus === 'lost' && solutionBeam ? solutionBeam : lastFiredBeam;
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -146,15 +161,16 @@ export default function App() {
 
       <main className={styles.main}>
         <p className={styles.prompt}>
-          Bend the beam to the target
+          {gameStatus === 'lost' ? 'Out of fires — here\'s the solution' : 'Plan your shot, then fire the beam'}
         </p>
-        <p className={styles.hint}>Tap the glowing dashed cells to place mirrors</p>
+        {interactive && <p className={styles.hint}>Tap the glowing dashed cells to place mirrors</p>}
 
         <MirrorGrid
           puzzle={puzzle}
-          mirrors={mirrors}
-          beam={beam}
-          gameStatus={gameStatus}
+          mirrors={displayMirrors}
+          beam={displayBeam}
+          beamStyle={beamStyle}
+          interactive={interactive}
           poppedSlot={poppedSlot}
           onToggleSlot={toggleSlot}
         />
@@ -162,14 +178,27 @@ export default function App() {
         <div className={styles.hud}>
           <span className={styles.hudCount}>
             {currentMirrorCount} mirror{currentMirrorCount === 1 ? '' : 's'} placed
-            <span className={styles.hudPar}> · par {puzzle.par}</span>
           </span>
-          {gameStatus === 'playing' && currentMirrorCount > 0 && (
+          {interactive && currentMirrorCount > 0 && (
             <button className={styles.resetBtn} onClick={reset}>Reset</button>
           )}
         </div>
 
-        {gameStatus === 'won' && !showResult && (
+        {interactive && (
+          <button className={styles.fireBtn} onClick={fireBeam}>
+            🔦 Fire Beam
+            <span className={styles.fireCount}>{firesRemaining}/{maxFires} left</span>
+          </button>
+        )}
+        {!interactive && (
+          <p className={styles.firesSpent}>
+            {gameStatus === 'won'
+              ? `Solved in ${firesUsedAtWin}/${maxFires} fires`
+              : `Used all ${maxFires} fires`}
+          </p>
+        )}
+
+        {(gameStatus === 'won' || gameStatus === 'lost') && !showResult && (
           <button className={styles.showResultBtn} onClick={() => setShowResult(true)}>
             See results
           </button>
@@ -180,17 +209,21 @@ export default function App() {
         <ResultScreen
           puzzle={puzzle}
           puzzleNumber={puzzleNumber}
+          outcome={gameStatus}
           stars={stars}
+          firesUsed={firesUsedAtWin || firedCount}
+          maxFires={maxFires}
           mirrorsUsed={mirrorsUsedAtWin}
           generateShareText={generateShareText}
           stats={stats}
+          winPct={winPct}
           avgStars={avgStars}
           onDismiss={() => setShowResult(false)}
         />
       )}
 
       {showHowToPlay && <HowToPlay onClose={dismissHowToPlay} />}
-      {showStats && <StatsScreen stats={stats} avgStars={avgStars} onClose={() => setShowStats(false)} />}
+      {showStats && <StatsScreen stats={stats} winPct={winPct} avgStars={avgStars} onClose={() => setShowStats(false)} />}
 
       {footer}
     </div>

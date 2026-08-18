@@ -148,6 +148,49 @@
   color: var(--text);
 }
 
+/* ── Fire beam — the primary commit action ── */
+.fireBtn {
+  width: 100%;
+  margin-top: 0.75rem;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+  transition: background 0.15s, transform 0.1s;
+}
+
+.fireBtn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.fireBtn:active {
+  transform: translateY(0);
+}
+
+.fireCount {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.85;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+}
+
+.firesSpent {
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
 /* ── Show result button ── */
 .showResultBtn {
   background: var(--surface-elevated);

@@ -80,3 +80,33 @@ export function cycleOrientation(current) {
   if (current === '\\') return undefined;
   return '/';
 }
+
+// Brute-force a minimal-mirror solution (same search the puzzle-authoring
+// scripts use to verify par) — used for the loss-reveal screen, computed
+// client-side on demand rather than baked into puzzle data, since it's cheap
+// (3^slots, slots is always small) and never needs to ship to the browser
+// as a spoiler sitting in the puzzle JSON.
+export function findSolution(puzzle) {
+  const slots = puzzle.slots;
+  const n = slots.length;
+  const ORIENTATIONS = [undefined, '/', '\\'];
+  let best = null;
+  let bestCount = Infinity;
+  const total = Math.pow(3, n);
+  for (let mask = 0; mask < total; mask++) {
+    const mirrors = {};
+    let m = mask;
+    let count = 0;
+    for (let i = 0; i < n; i++) {
+      const o = ORIENTATIONS[m % 3];
+      m = Math.floor(m / 3);
+      if (o) { mirrors[cellKey(slots[i].row, slots[i].col)] = o; count++; }
+    }
+    if (count >= bestCount) continue;
+    if (simulateBeam(puzzle, mirrors).result === 'win') {
+      best = mirrors;
+      bestCount = count;
+    }
+  }
+  return best;
+}
