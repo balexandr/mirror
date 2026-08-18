@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import puzzles from '../data/puzzles.js';
-import { simulateBeam, isSolved, isTwoBeamPuzzle, mirrorCount, cycleOrientation, findSolution } from '../utils/beam.js';
+import { simulateAllBeams, isSolved, mirrorCount, cycleOrientation, findSolution } from '../utils/beam.js';
 
 const STORAGE_KEY = 'mirror-game-state';
 const EPOCH = '2026-08-17';
@@ -29,10 +29,7 @@ function starsForFires(fires) {
 function fingerprint(puzzle) {
   return JSON.stringify({
     size: puzzle.size,
-    source: puzzle.source,
-    target: puzzle.target,
-    source2: puzzle.source2,
-    target2: puzzle.target2,
+    beams: puzzle.beams,
     fixed: puzzle.fixed,
     slots: puzzle.slots,
     par: puzzle.par,
@@ -63,7 +60,7 @@ export function useGameState() {
   // freely, and NOT what determines the beam trace shown on screen.
   const [mirrors, setMirrors] = useState({});
   // The mirror layout as of the last time "Fire Beam" was pressed — this,
-  // not `mirrors`, is what the beam trace on screen is computed from. The
+  // not `mirrors`, is what the beam traces on screen are computed from. The
   // whole point of the hidden-beam mechanic: you don't get to see the
   // light react to every tap anymore, only to a committed shot.
   const [lastFiredMirrors, setLastFiredMirrors] = useState(null);
@@ -73,6 +70,9 @@ export function useGameState() {
   const [gameStatus, setGameStatus] = useState('playing'); // 'playing' | 'won' | 'lost'
   const [initialized, setInitialized] = useState(false);
   const [poppedSlot, setPoppedSlot] = useState(null);
+  // Bumped on every fire (never persisted) purely to give the beam-draw
+  // animation a fresh key to remount against — see MirrorGrid.
+  const [fireId, setFireId] = useState(0);
 
   useEffect(() => {
     if (!puzzle) { setInitialized(true); return; }
@@ -102,39 +102,25 @@ export function useGameState() {
     });
   }, [mirrors, lastFiredMirrors, firedCount, firesUsedAtWin, mirrorsUsedAtWin, gameStatus, initialized]);
 
-  const twoBeam = puzzle ? isTwoBeamPuzzle(puzzle) : false;
-
-  // The trace of the last committed shot — null before any fire, so the
-  // grid genuinely shows nothing until the player commits. Beam 2 stays
-  // null for ordinary single-beam puzzles.
-  const lastFiredBeam = useMemo(() => {
+  // Traces of the last committed shot, one per beam — null before any fire,
+  // so the grid genuinely shows nothing until the player commits.
+  const lastFiredBeams = useMemo(() => {
     if (!puzzle || !lastFiredMirrors) return null;
-    return simulateBeam(puzzle, lastFiredMirrors, puzzle.source, puzzle.target);
+    return simulateAllBeams(puzzle, lastFiredMirrors);
   }, [puzzle, lastFiredMirrors]);
-
-  const lastFiredBeam2 = useMemo(() => {
-    if (!puzzle || !lastFiredMirrors || !twoBeam) return null;
-    return simulateBeam(puzzle, lastFiredMirrors, puzzle.source2, puzzle.target2);
-  }, [puzzle, lastFiredMirrors, twoBeam]);
 
   // Only computed on a loss, and only ever for the reveal screen — cheap
   // brute force, see findSolution's own comment for why this isn't
-  // pre-baked into puzzle data. findSolution already requires BOTH beams
-  // to win for a two-beam puzzle (via isSolved), so no special-casing here.
+  // pre-baked into puzzle data.
   const solution = useMemo(() => {
     if (!puzzle || gameStatus !== 'lost') return null;
     return findSolution(puzzle);
   }, [puzzle, gameStatus]);
 
-  const solutionBeam = useMemo(() => {
+  const solutionBeams = useMemo(() => {
     if (!puzzle || !solution) return null;
-    return simulateBeam(puzzle, solution, puzzle.source, puzzle.target);
+    return simulateAllBeams(puzzle, solution);
   }, [puzzle, solution]);
-
-  const solutionBeam2 = useMemo(() => {
-    if (!puzzle || !solution || !twoBeam) return null;
-    return simulateBeam(puzzle, solution, puzzle.source2, puzzle.target2);
-  }, [puzzle, solution, twoBeam]);
 
   const toggleSlot = useCallback((row, col) => {
     if (!puzzle || gameStatus !== 'playing') return;
@@ -153,12 +139,11 @@ export function useGameState() {
   const fireBeam = useCallback(() => {
     if (!puzzle || gameStatus !== 'playing') return;
     const snapshot = { ...mirrors };
-    // isSolved checks both beams for a two-beam puzzle — same mirror layout
-    // has to route each beam to its own target simultaneously.
     const won = isSolved(puzzle, snapshot);
     const newFiredCount = firedCount + 1;
     setLastFiredMirrors(snapshot);
     setFiredCount(newFiredCount);
+    setFireId((n) => n + 1);
     if (won) {
       setGameStatus('won');
       setMirrorsUsedAtWin(mirrorCount(snapshot));
@@ -175,6 +160,8 @@ export function useGameState() {
 
   const stars = gameStatus === 'won' ? starsForFires(firesUsedAtWin) : 0;
   const firesRemaining = MAX_FIRES - firedCount;
+  const beamCount = puzzle ? puzzle.beams.length : 1;
+  const beamWord = beamCount > 1 ? 'beams' : 'beam';
 
   const generateShareText = useCallback(() => {
     if (!puzzle || gameStatus === 'playing') return '';
@@ -190,12 +177,12 @@ export function useGameState() {
     puzzleNumber,
     dateKey,
     mirrors,
-    lastFiredBeam,
-    lastFiredBeam2,
+    lastFiredBeams,
     solution,
-    solutionBeam,
-    solutionBeam2,
-    twoBeam,
+    solutionBeams,
+    beamCount,
+    beamWord,
+    fireId,
     gameStatus,
     initialized,
     firedCount,

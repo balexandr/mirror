@@ -46,6 +46,12 @@
   text-shadow: 0 0 8px rgba(45, 212, 191, 0.55), 0 0 16px rgba(45, 212, 191, 0.35);
 }
 
+/* Beam C (three-beam puzzles) — magenta, the third hue in the set. */
+.entryArrow3 {
+  color: #f472b6;
+  text-shadow: 0 0 8px rgba(244, 114, 182, 0.55), 0 0 16px rgba(244, 114, 182, 0.35);
+}
+
 /* ── Playing surface ──────────────────────────────────────────── */
 .gridWrap {
   position: relative;
@@ -90,6 +96,26 @@
   stroke-linejoin: round;
 }
 
+/* Fired shots "travel" through the path rather than just appearing — each
+   segment draws itself in via stroke-dashoffset (normalized to 0-1 by
+   pathLength="1" on the <line>, so this works regardless of the segment's
+   actual on-screen length or the percentage coordinate system), staggered
+   by --seg-index so later bends light up after earlier ones, like the beam
+   is really propagating through the mirrors in order. */
+.beamDraw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  /* animation shorthand fully overwrites, it doesn't merge — so the win
+     state (which also needs an infinite pulse) gets its own compound rule
+     below listing both animations together, rather than relying on this
+     one to somehow combine with .beamLineWon's. */
+  animation: drawSegment 0.16s linear calc(var(--seg-index) * 70ms) both;
+}
+
+@keyframes drawSegment {
+  to { stroke-dashoffset: 0; }
+}
+
 /* The beam is hidden until "Fire Beam" is pressed — this is the trace of
    the LAST shot, shown dim while still playing so a fired attempt gives
    real feedback without live-updating on every tap (that live redraw was
@@ -112,6 +138,15 @@
     drop-shadow(0 0 8px rgba(45, 212, 191, 0.2));
 }
 
+/* Beam C's ghost trace — magenta, the third hue. */
+.beamLineGhost3 {
+  stroke: #f472b6;
+  opacity: 0.45;
+  filter:
+    drop-shadow(0 0 3px #f472b6)
+    drop-shadow(0 0 8px rgba(244, 114, 182, 0.2));
+}
+
 .beamLineWon {
   stroke: var(--win);
   opacity: 1;
@@ -119,7 +154,16 @@
     drop-shadow(0 0 5px var(--win))
     drop-shadow(0 0 16px var(--win-glow))
     drop-shadow(0 0 30px rgba(251, 191, 36, 0.3));
-  animation: beamPulse 2s ease-in-out infinite;
+}
+
+/* Win still needs the draw-in AND the infinite pulse together — the
+   `animation` shorthand fully replaces, it can't merge two separate class
+   declarations, so this compound selector (higher specificity than either
+   alone, so it wins regardless of source order) lists both explicitly. */
+.beamLineWon.beamDraw {
+  animation:
+    drawSegment 0.16s linear calc(var(--seg-index) * 70ms) both,
+    beamPulse 2s ease-in-out infinite;
 }
 
 /* Answer reveal on a loss — deliberately a different hue from both the win
@@ -281,6 +325,31 @@
   box-shadow:
     inset 1px 1px 0 rgba(45, 212, 191, 0.25),
     0 0 18px rgba(45, 212, 191, 0.4);
+}
+
+/* Beam C's source/target — magenta, the third hue in the set. */
+.source.beam3Marker {
+  border-color: rgba(244, 114, 182, 0.55);
+  box-shadow:
+    inset 1px 1px 0 rgba(244, 114, 182, 0.2),
+    0 0 14px rgba(244, 114, 182, 0.3);
+}
+
+.source.beam3Marker .sourceGlyph {
+  background: #f472b6;
+  box-shadow: 0 0 8px #f472b6, 0 0 18px rgba(244, 114, 182, 0.4);
+}
+
+.target.beam3Marker {
+  color: #f472b6;
+  border-color: rgba(244, 114, 182, 0.4);
+}
+
+.target.beam3Marker.targetHit {
+  border-color: rgba(244, 114, 182, 0.75);
+  box-shadow:
+    inset 1px 1px 0 rgba(244, 114, 182, 0.25),
+    0 0 18px rgba(244, 114, 182, 0.4);
 }
 
 .targetHit {

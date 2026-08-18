@@ -36,7 +36,7 @@ export default function HowToPlay({ onClose }) {
           <li>A fired shot leaves a dim trace so you can adjust and fire again</li>
           <li>5 fires per puzzle — like guesses. Run out, and it's a loss for the day</li>
           <li>Fewer fires to solve it = more stars</li>
-          <li>Harder puzzles have <strong>two beams</strong> sharing the same mirrors — both have to land</li>
+          <li>Harder puzzles have <strong>multiple beams</strong> sharing the same mirrors — every one has to land</li>
           <li>A new puzzle every day</li>
         </ul>
 

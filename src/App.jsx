@@ -18,12 +18,12 @@ export default function App() {
     puzzleNumber,
     dateKey,
     mirrors,
-    lastFiredBeam,
-    lastFiredBeam2,
+    lastFiredBeams,
     solution,
-    solutionBeam,
-    solutionBeam2,
-    twoBeam,
+    solutionBeams,
+    beamCount,
+    beamWord,
+    fireId,
     gameStatus,
     initialized,
     firedCount,
@@ -140,8 +140,7 @@ export default function App() {
   // wrong guess isn't nearly as useful as just showing the answer).
   const displayMirrors = gameStatus === 'lost' && solution ? solution : mirrors;
   const beamStyle = gameStatus === 'won' ? 'win' : gameStatus === 'lost' ? 'lost' : 'ghost';
-  const displayBeam = gameStatus === 'lost' && solutionBeam ? solutionBeam : lastFiredBeam;
-  const displayBeam2 = gameStatus === 'lost' && solutionBeam2 ? solutionBeam2 : lastFiredBeam2;
+  const displayBeams = gameStatus === 'lost' && solutionBeams ? solutionBeams : lastFiredBeams;
 
   return (
     <div className={styles.container}>
@@ -165,22 +164,24 @@ export default function App() {
 
       <main className={styles.main}>
         <p className={styles.prompt}>
-          {gameStatus === 'lost' ? 'Out of fires — here\'s the solution' : 'Plan your shot, then fire the beam'}
+          {gameStatus === 'lost' ? `Out of fires — here's the solution` : `Plan your shot, then fire the ${beamWord}`}
         </p>
         {interactive && <p className={styles.hint}>Tap the glowing dashed cells to place mirrors</p>}
 
         <MirrorGrid
           puzzle={puzzle}
           mirrors={displayMirrors}
-          beam={displayBeam}
-          beam2={displayBeam2}
+          beams={displayBeams}
           beamStyle={beamStyle}
+          fireId={fireId}
           interactive={interactive}
           poppedSlot={poppedSlot}
           onToggleSlot={toggleSlot}
         />
-        {twoBeam && interactive && (
-          <p className={styles.twoBeamNote}>Two beams share these mirrors — both must land</p>
+        {beamCount > 1 && interactive && (
+          <p className={styles.twoBeamNote}>
+            {beamCount} beams share these mirrors — all {beamCount} must land
+          </p>
         )}
 
         <div className={styles.hud}>
@@ -194,7 +195,7 @@ export default function App() {
 
         {interactive && (
           <button className={styles.fireBtn} onClick={fireBeam}>
-            🔦 Fire Beam
+            🔦 Fire {beamCount > 1 ? 'Beams' : 'Beam'}
             <span className={styles.fireCount}>{firesRemaining}/{maxFires} left</span>
           </button>
         )}

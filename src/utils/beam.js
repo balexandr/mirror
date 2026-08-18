@@ -19,19 +19,20 @@ function cellKey(row, col) {
 
 /**
  * Simulate one beam through a puzzle given the player's current mirror
- * placements in the interactive slots. Source/target default to the
- * puzzle's primary pair (`puzzle.source`/`puzzle.target`) but can be
- * overridden — this is how two-beam puzzles work: the same board, walls,
- * fixed mirrors, and slot mirrors are shared, and this function just gets
- * called twice with `puzzle.source2`/`puzzle.target2` for the second beam.
+ * placements in the interactive slots. A puzzle can have N beams sharing
+ * the same board (`puzzle.beams`, each `{source, target}`) — this function
+ * only ever simulates ONE of them per call, at the caller's chosen source
+ * and target. That's deliberate: the whole shared-mirror-layout mechanic
+ * falls out of just calling this once per beam against the same `mirrors`,
+ * with no branching-path logic needed anywhere in here.
  *
- * @param {object} puzzle - { size, source, target, source2?, target2?, fixed: [{row,col,type,orientation}] }
+ * @param {object} puzzle - { size, beams: [{source,target}], fixed: [{row,col,type,orientation}] }
  * @param {Record<string, '/'|'\\'>} mirrors - slot key -> orientation (absent/undefined = empty slot)
- * @param {{row:number,col:number,dir:string}} [source] - defaults to puzzle.source
- * @param {{row:number,col:number}} [target] - defaults to puzzle.target
+ * @param {{row:number,col:number,dir:string}} source
+ * @param {{row:number,col:number}} target
  * @returns {{ cells: {row:number,col:number}[], result: 'win'|'wall'|'open'|'loop' }}
  */
-export function simulateBeam(puzzle, mirrors, source = puzzle.source, target = puzzle.target) {
+export function simulateBeam(puzzle, mirrors, source, target) {
   const { size, fixed = [] } = puzzle;
   const fixedMap = {};
   for (const f of fixed) fixedMap[cellKey(f.row, f.col)] = f;
@@ -77,23 +78,24 @@ export function simulateBeam(puzzle, mirrors, source = puzzle.source, target = p
   return { cells, result };
 }
 
-export function isTwoBeamPuzzle(puzzle) {
-  return Boolean(puzzle.source2 && puzzle.target2);
+/**
+ * Simulate every beam in a puzzle against one mirror layout — the array
+ * MirrorGrid renders traces from, and what isSolved is built on top of.
+ */
+export function simulateAllBeams(puzzle, mirrors) {
+  return puzzle.beams.map((b) => simulateBeam(puzzle, mirrors, b.source, b.target));
 }
 
 /**
- * A puzzle counts as solved when its primary beam reaches its target — and,
- * for a two-beam puzzle, the second beam reaches ITS target too, with the
- * exact same mirror layout. That shared-constraint requirement (one set of
- * mirrors has to work for both beams at once) is the whole difficulty of
- * the mode, not anything special in the simulation itself.
+ * A puzzle counts as solved when EVERY one of its beams reaches its own
+ * target with the exact same mirror layout. For a single-beam puzzle
+ * that's just the ordinary win check; for N beams sharing one board, a
+ * placement that helps beam 1 can wreck beam 2 — that shared constraint,
+ * not anything special in the simulation, is the whole difficulty of the
+ * multi-beam mode.
  */
 export function isSolved(puzzle, mirrors) {
-  if (simulateBeam(puzzle, mirrors, puzzle.source, puzzle.target).result !== 'win') return false;
-  if (isTwoBeamPuzzle(puzzle)) {
-    if (simulateBeam(puzzle, mirrors, puzzle.source2, puzzle.target2).result !== 'win') return false;
-  }
-  return true;
+  return puzzle.beams.every((b) => simulateBeam(puzzle, mirrors, b.source, b.target).result === 'win');
 }
 
 export function mirrorCount(mirrors) {
@@ -111,7 +113,7 @@ export function cycleOrientation(current) {
 // client-side on demand rather than baked into puzzle data, since it's cheap
 // (3^slots, slots is always small) and never needs to ship to the browser
 // as a spoiler sitting in the puzzle JSON. Uses isSolved, so it works the
-// same way for one- and two-beam puzzles without any special-casing here.
+// same way regardless of how many beams the puzzle has.
 export function findSolution(puzzle) {
   const slots = puzzle.slots;
   const n = slots.length;

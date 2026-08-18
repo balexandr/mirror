@@ -40,24 +40,32 @@ function beamToSegments(beam, source, size) {
   return points.slice(1).map((p, i) => ({ from: points[i], to: p }));
 }
 
+// Ghost-state color per beam index — indigo (beam 0, the CSS default with
+// no modifier), teal (1), magenta (2). Cycles if a puzzle ever has more
+// than 3 beams, though nothing currently generates that many.
+const GHOST_CLASS_BY_INDEX = ['beamLineGhost', 'beamLineGhost2', 'beamLineGhost3'];
+const MARKER_CLASS_BY_INDEX = [null, 'beam2Marker', 'beam3Marker'];
+const ENTRY_CLASS_BY_INDEX = [null, 'entryArrow2', 'entryArrow3'];
+
 /**
  * @param mirrors    the mirror layout to render as glyphs — the player's own
  *                    current placement while playing, or the revealed
  *                    solution's layout on a loss.
- * @param beam        {cells,result} for the primary beam, or null to show no
- *                     beam at all (the pre-fire state — the whole point of
- *                     the mechanic).
- * @param beam2       same, for the second beam on a two-beam puzzle. null
- *                     for ordinary single-beam puzzles.
- * @param beamStyle   'win' | 'lost' | 'ghost' — visual treatment for BOTH
- *                     beam traces (the outcome is shared: on a two-beam
- *                     puzzle you only win when both land). Ghost = a dim
- *                     trace of the last shot, shown while still playing.
+ * @param beams       array parallel to puzzle.beams: {cells,result} per beam,
+ *                     or null (pre-fire — the whole point of the mechanic:
+ *                     nothing renders until a shot is committed).
+ * @param beamStyle   'win' | 'lost' | 'ghost' — visual treatment shared by
+ *                     ALL beam traces (the outcome is shared: you only win
+ *                     when every beam lands). Ghost = each beam's own dim,
+ *                     distinctly-colored trace of the last shot.
+ * @param fireId       increments on every fire — included in each beam
+ *                      line's key so it remounts (and its draw-in animation
+ *                      replays) on every shot, not just the first one.
  * @param interactive whether slot cells respond to taps at all.
  */
-export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, interactive, poppedSlot, onToggleSlot }) {
-  const { size, source, target, source2, target2, fixed = [], slots } = puzzle;
-  const hasBeam2 = Boolean(source2 && target2);
+export default function MirrorGrid({ puzzle, mirrors, beams, beamStyle, fireId, interactive, poppedSlot, onToggleSlot }) {
+  const { size, fixed = [], slots } = puzzle;
+  const puzzleBeams = puzzle.beams;
   // Floor is most of a big board and isn't a mirror slot — tapping it should
   // never feel like nothing happened, so it gets a quick "not tappable" flash.
   const [deniedCell, setDeniedCell] = useState(null);
@@ -65,38 +73,37 @@ export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, in
   const fixedMap = {};
   for (const f of fixed) fixedMap[cellKey(f.row, f.col)] = f;
   const slotSet = new Set(slots.map((s) => cellKey(s.row, s.col)));
-  const beamCellSet = new Set((beam ? beam.cells : []).map((c) => cellKey(c.row, c.col)));
-  const beam2CellSet = new Set((beam2 ? beam2.cells : []).map((c) => cellKey(c.row, c.col)));
 
-  const beamSegments = beamToSegments(beam, source, size);
-  const beam2Segments = hasBeam2 ? beamToSegments(beam2, source2, size) : [];
-  const beamLineClass =
-    beamStyle === 'win' ? styles.beamLineWon
-    : beamStyle === 'lost' ? styles.beamLineSolution
-    : styles.beamLineGhost;
-  // Beam 2 gets its own hue so the two traces are never ambiguous, but only
-  // while still playing (ghost) — a win or loss reveal is a shared outcome,
-  // so both traces match at that point same as the sources/targets do.
-  const beam2LineClass = beamStyle === 'ghost' ? styles.beamLineGhost2 : beamLineClass;
+  const onBeamCellSet = new Set();
+  (beams || []).forEach((b) => { if (b) b.cells.forEach((c) => onBeamCellSet.add(cellKey(c.row, c.col))); });
 
-  const entries = [arrowPlacement(source, size)];
-  if (hasBeam2) entries.push(arrowPlacement(source2, size));
+  const sourceMap = {}; // cellKey -> beam index (for source cells)
+  const targetMap = {}; // cellKey -> beam index (for target cells)
+  puzzleBeams.forEach((b, i) => {
+    sourceMap[cellKey(b.source.row, b.source.col)] = i;
+    targetMap[cellKey(b.target.row, b.target.col)] = i;
+  });
 
   return (
     <div className={styles.boardFrame}>
-      {entries.map((entry, i) => entry && (
-        <span
-          key={i}
-          className={`${styles.entryArrow} ${i === 1 ? styles.entryArrow2 : ''} ${styles[`side${entry.side[0].toUpperCase()}${entry.side.slice(1)}`]}`}
-          style={{
-            [entry.side === 'top' || entry.side === 'bottom' ? 'left' : 'top']: `${entry.pos}%`,
-            pointerEvents: 'none',
-          }}
-          aria-hidden="true"
-        >
-          {entry.glyph}
-        </span>
-      ))}
+      {puzzleBeams.map((b, i) => {
+        const entry = arrowPlacement(b.source, size);
+        if (!entry) return null;
+        const entryModClass = ENTRY_CLASS_BY_INDEX[i % ENTRY_CLASS_BY_INDEX.length];
+        return (
+          <span
+            key={i}
+            className={`${styles.entryArrow} ${entryModClass ? styles[entryModClass] : ''} ${styles[`side${entry.side[0].toUpperCase()}${entry.side.slice(1)}`]}`}
+            style={{
+              [entry.side === 'top' || entry.side === 'bottom' ? 'left' : 'top']: `${entry.pos}%`,
+              pointerEvents: 'none',
+            }}
+            aria-hidden="true"
+          >
+            {entry.glyph}
+          </span>
+        );
+      })}
 
       <div className={styles.gridWrap}>
         {/* pointerEvents set both here (belt) and in CSS (suspenders) — this
@@ -104,24 +111,28 @@ export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, in
             `pointer-events: none` from <svg> onto <line> the way Chromium
             does, every click anywhere on the grid gets silently swallowed. */}
         <svg className={styles.beamSvg} pointerEvents="none" aria-hidden="true">
-          {beamSegments.map((seg, i) => (
-            <line
-              key={`b1-${i}`}
-              x1={`${seg.from.x}%`} y1={`${seg.from.y}%`}
-              x2={`${seg.to.x}%`} y2={`${seg.to.y}%`}
-              pointerEvents="none"
-              className={`${styles.beamLine} ${beamLineClass}`}
-            />
-          ))}
-          {beam2Segments.map((seg, i) => (
-            <line
-              key={`b2-${i}`}
-              x1={`${seg.from.x}%`} y1={`${seg.from.y}%`}
-              x2={`${seg.to.x}%`} y2={`${seg.to.y}%`}
-              pointerEvents="none"
-              className={`${styles.beamLine} ${beam2LineClass}`}
-            />
-          ))}
+          {puzzleBeams.map((b, beamIdx) => {
+            const trace = beams ? beams[beamIdx] : null;
+            const segments = beamToSegments(trace, b.source, size);
+            const lineClass =
+              beamStyle === 'win' ? styles.beamLineWon
+              : beamStyle === 'lost' ? styles.beamLineSolution
+              : styles[GHOST_CLASS_BY_INDEX[beamIdx % GHOST_CLASS_BY_INDEX.length]];
+            return segments.map((seg, i) => (
+              <line
+                // fireId in the key forces a remount (not just an attribute
+                // update) on every shot, so the draw-in animation — which
+                // only plays once per mount — actually replays each time.
+                key={`beam${beamIdx}-fire${fireId}-${i}`}
+                x1={`${seg.from.x}%`} y1={`${seg.from.y}%`}
+                x2={`${seg.to.x}%`} y2={`${seg.to.y}%`}
+                pathLength="1"
+                pointerEvents="none"
+                className={`${styles.beamLine} ${lineClass} ${styles.beamDraw}`}
+                style={{ '--seg-index': i }}
+              />
+            ));
+          })}
         </svg>
 
         <div
@@ -135,30 +146,32 @@ export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, in
           {Array.from({ length: size }).map((_, r) =>
             Array.from({ length: size }).map((__, c) => {
               const key = cellKey(r, c);
-              const isSource = r === source.row && c === source.col;
-              const isTarget = r === target.row && c === target.col;
-              const isSource2 = hasBeam2 && r === source2.row && c === source2.col;
-              const isTarget2 = hasBeam2 && r === target2.row && c === target2.col;
+              const sourceBeamIdx = sourceMap[key];
+              const targetBeamIdx = targetMap[key];
+              const isSource = sourceBeamIdx !== undefined;
+              const isTarget = targetBeamIdx !== undefined;
               const f = fixedMap[key];
               const isWall = f?.type === 'wall';
               const isFixedMirror = f?.type === 'mirror';
               const isSlot = slotSet.has(key);
               const orientation = isFixedMirror ? f.orientation : mirrors[key];
-              const onBeam = beamCellSet.has(key) || beam2CellSet.has(key);
+              const onBeam = onBeamCellSet.has(key);
               const popped = poppedSlot === key;
               // Fixed mirrors are scenery the beam bounces off, same as a wall —
               // not a slot, and not "floor" either, so they get neither the
               // tap-to-place behavior nor the denied-flash meant for empty floor.
-              const isFloor = !isSource && !isTarget && !isSource2 && !isTarget2 && !isWall && !isSlot && !isFixedMirror;
+              const isFloor = !isSource && !isTarget && !isWall && !isSlot && !isFixedMirror;
               const denied = deniedCell === key;
+
+              const beamIdx = isSource ? sourceBeamIdx : isTarget ? targetBeamIdx : 0;
+              const markerModClass = MARKER_CLASS_BY_INDEX[beamIdx % MARKER_CLASS_BY_INDEX.length];
 
               let cls = styles.cell;
               if (isWall) cls += ` ${styles.wall}`;
               if (isSource) cls += ` ${styles.source}`;
               if (isTarget) cls += ` ${styles.target}`;
-              if (isSource2) cls += ` ${styles.source} ${styles.beam2Marker}`;
-              if (isTarget2) cls += ` ${styles.target} ${styles.beam2Marker}`;
-              if ((isTarget || isTarget2) && beamStyle === 'win') cls += ` ${styles.targetHit}`;
+              if (markerModClass) cls += ` ${styles[markerModClass]}`;
+              if (isTarget && beamStyle === 'win') cls += ` ${styles.targetHit}`;
               if (isSlot && !orientation) cls += ` ${styles.slotEmpty}`;
               if (isFixedMirror) cls += ` ${styles.fixedMirror}`;
               else if (orientation) cls += ` ${styles.hasMirror}`;
@@ -171,7 +184,7 @@ export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, in
                   key={key}
                   type="button"
                   className={cls}
-                  disabled={!interactive || isWall || isSource || isTarget || isSource2 || isTarget2 || isFixedMirror}
+                  disabled={!interactive || isWall || isSource || isTarget || isFixedMirror}
                   onClick={() => {
                     if (!interactive) return;
                     if (isSlot) onToggleSlot(r, c);
@@ -181,10 +194,8 @@ export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, in
                     }
                   }}
                   aria-label={
-                    isSource ? 'Light source A'
-                    : isTarget ? 'Target A'
-                    : isSource2 ? 'Light source B'
-                    : isTarget2 ? 'Target B'
+                    isSource ? `Light source${puzzleBeams.length > 1 ? ' ' + String.fromCharCode(65 + sourceBeamIdx) : ''}`
+                    : isTarget ? `Target${puzzleBeams.length > 1 ? ' ' + String.fromCharCode(65 + targetBeamIdx) : ''}`
                     : isWall ? 'Wall'
                     : isFixedMirror ? `Fixed mirror, permanently set to ${orientation}`
                     : isSlot ? `Mirror slot, row ${r + 1} column ${c + 1}${orientation ? `, mirror set to ${orientation}` : ', empty'}`
@@ -207,7 +218,7 @@ export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, in
                       </svg>
                     </span>
                   )}
-                  {(isTarget || isTarget2) && (
+                  {isTarget && (
                     <span className={styles.targetGlyph} aria-hidden="true">
                       <svg viewBox="0 0 20 20" width="60%" height="60%">
                         <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -215,7 +226,7 @@ export default function MirrorGrid({ puzzle, mirrors, beam, beam2, beamStyle, in
                       </svg>
                     </span>
                   )}
-                  {(isSource || isSource2) && <span className={styles.sourceGlyph} aria-hidden="true" />}
+                  {isSource && <span className={styles.sourceGlyph} aria-hidden="true" />}
                 </button>
               );
             })

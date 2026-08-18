@@ -343,3 +343,54 @@ two-beam puzzles need zero special-casing anywhere but the renderer.
   `'playing'` with fires ticking down, showing beam A's ghost trace
   reaching its target while beam B's ghost trace sails past its own,
   untouched.
+
+## Animated fire, pluralized to N beams, and pushed much harder (2026-08-18, later)
+
+Solved the two-beam puzzle in 5 seconds. Three requests landed at
+once: animate the fire, "pluralize it," and make it much harder — the
+second one turned out to be the right lever for the third.
+
+- **Generalized two-beam → N-beam.** `puzzle.source`/`target`/
+  `source2`/`target2` (hardcoded to exactly two) is gone. Puzzle data
+  now has a single `beams: [{source, target}, ...]` array — one entry
+  for an ordinary puzzle, three for the new hardest tier. Nothing
+  else needed to change to support it: `isSolved` is
+  `puzzle.beams.every(b => simulateBeam(...).result === 'win')`, and
+  `findSolution`, the fire loop, and the loss-reveal all already went
+  through `isSolved`, so N-beam support was "delete the hardcoded
+  pair, add a loop" rather than new logic anywhere.
+- **MirrorGrid renders a 3-color palette** (indigo/white beam 0, teal
+  beam 1, magenta beam 2, cycling by index if a puzzle ever has more)
+  for sources, targets, and ghost traces, so three simultaneous shots
+  stay visually unambiguous. Win/loss states still share one outcome
+  color (gold/green) across all beams — only the ghost (still-playing)
+  state is per-beam-colored.
+- **Fire animation**: each segment of a fired trace draws itself in
+  via `stroke-dashoffset`, normalized with the SVG `pathLength="1"`
+  attribute so the animation works regardless of a segment's actual
+  on-screen length or the percentage coordinate system — no need to
+  compute real pixel lengths. Segments stagger via a `--seg-index`
+  CSS custom property (~70ms apart) so the beam visibly "travels"
+  through each bend in firing order rather than just appearing.
+  `fireId` (bumped on every fire, never persisted) is folded into each
+  `<line>`'s React key purely so the elements remount — and the
+  once-per-mount CSS animation actually replays — on every shot, not
+  just the first. Gotcha hit and fixed: the CSS `animation` shorthand
+  fully replaces rather than merges, so the win state (which needs
+  BOTH the draw-in and an infinite pulse) needed one compound
+  `.beamLineWon.beamDraw` rule listing both animations explicitly —
+  two separate class rules each setting `animation` just clobber each
+  other. Verified live: captured three segments mid-fire with
+  different `stroke-dashoffset` values (0.22 / 0.66 / 1.0), confirming
+  the stagger is real, not just present in the CSS source.
+- **Difficulty**: days 2-14 are now three-beam (day 1, already
+  played, stays single-beam). Puzzle generation switched from
+  "search for an exact/threshold par" (which the two-beam pass used,
+  and which turned out to scale badly — a full-target search at 3
+  beams took 10+ minutes per puzzle and sometimes never converged) to
+  "best-of-N random candidates, keep the hardest one found" — bounded,
+  predictable runtime regardless of how rare a high par is. Par
+  landed at 3, then 5,5,6,7,6,5,6,6,7,5,6,5,5 for days 2-14. Every
+  puzzle still individually brute-force verified the same as always
+  (true minimum par, 0-mirror never wins) — "best-of-N" only changed
+  how candidates get proposed, not how a chosen one gets verified.
