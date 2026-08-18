@@ -394,3 +394,34 @@ second one turned out to be the right lever for the third.
   puzzle still individually brute-force verified the same as always
   (true minimum par, 0-mirror never wins) — "best-of-N" only changed
   how candidates get proposed, not how a chosen one gets verified.
+
+## Entry-arrow bug (2026-08-18, later still)
+
+User asked to "fix the tiny arrows" showing beam direction. Turned out
+to be a real, longstanding bug, not just a sizing complaint: the
+`arrowPlacement` switch statement had the horizontal cases backwards
+from day one — `dir: 'right'` (entering the left edge, travelling
+into the grid) got the glyph `◂`, which points left, away from the
+grid; `dir: 'left'` got `▸`, same mistake the other way. Vertical
+cases (`up`/`down`) were correct, so this only ever showed on beams
+entering from the left or right edge — easy to miss since roughly
+half of edge-entering beams wouldn't trigger it.
+
+Fixed by removing the hand-picked-glyph-per-case pattern entirely,
+which is how the mismatch slipped in unnoticed: `arrowPlacement` now
+just returns the real travel direction, and the renderer draws one
+SVG arrowhead (`<path d="M2 2 L14 8 L2 14 Z">`, points right by
+default) rotated via CSS `transform: rotate()` — 0/90/180/270 for
+right/down/left/up. A single shape can't independently get one
+direction backwards the way four hand-picked unicode glyphs could.
+Also fixes the "tiny" complaint as a side effect: text-glyph
+triangles (▾▴◂▸) render inconsistently sized across fonts/platforms;
+a 16×16 SVG with its own `filter: drop-shadow` glow is crisp and
+consistent regardless of the browser's font.
+
+Verified against today's actual puzzle (2026-08-18), which has a real
+`dir: 'right'` beam — exactly the previously-broken case. Confirmed
+via computed `transform` on the arrow SVG (`rotate(0deg)` for the
+right-travelling beam, `90deg`/`270deg` for down/up) and visually:
+the magenta arrow on the left edge now points right, into the grid,
+matching its beam's actual direction of travel.

@@ -6,17 +6,27 @@ function cellKey(row, col) {
 }
 
 // Where an entry arrow sits, just outside the board, and which way it points.
+// Bug fixed here: the left/right cases used to hand back a glyph pointing
+// AWAY from the grid (dir 'right' — entering the left edge, travelling
+// in — got a left-pointing glyph, and 'left' got a right-pointing one).
+// Up/down were fine; only the horizontal cases were backwards. Now this
+// just returns the actual travel direction and the renderer draws an SVG
+// arrowhead rotated to match it, rather than trusting a hand-picked glyph
+// per case (which is how the mismatch slipped in unnoticed).
 function arrowPlacement(source, size) {
   const cellPct = 100 / size;
   const center = (n) => (n + 0.5) * cellPct;
   switch (source.dir) {
-    case 'down': return { side: 'top', pos: center(source.col), glyph: '▾' };
-    case 'up': return { side: 'bottom', pos: center(source.col), glyph: '▴' };
-    case 'right': return { side: 'left', pos: center(source.row), glyph: '◂' };
-    case 'left': return { side: 'right', pos: center(source.row), glyph: '▸' };
+    case 'down': return { side: 'top', pos: center(source.col), dir: 'down' };
+    case 'up': return { side: 'bottom', pos: center(source.col), dir: 'up' };
+    case 'right': return { side: 'left', pos: center(source.row), dir: 'right' };
+    case 'left': return { side: 'right', pos: center(source.row), dir: 'left' };
     default: return null;
   }
 }
+
+// Degrees to rotate a right-pointing arrowhead so it points the given way.
+const ARROW_ROTATION = { right: 0, down: 90, left: 180, up: 270 };
 
 // Turns a beam's {cells,result} into drawable <line> segments in the same
 // 0-100 percentage space as the CSS grid, prefixed with an entry point off
@@ -100,7 +110,14 @@ export default function MirrorGrid({ puzzle, mirrors, beams, beamStyle, fireId, 
             }}
             aria-hidden="true"
           >
-            {entry.glyph}
+            <svg
+              viewBox="0 0 16 16"
+              width="16"
+              height="16"
+              style={{ transform: `rotate(${ARROW_ROTATION[entry.dir]}deg)` }}
+            >
+              <path d="M2 2 L14 8 L2 14 Z" fill="currentColor" />
+            </svg>
           </span>
         );
       })}

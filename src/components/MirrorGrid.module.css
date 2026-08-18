@@ -22,12 +22,16 @@
 }
 
 /* ── Entry arrow (beam origin marker, sits outside the board) ───── */
+/* An SVG arrowhead, not a text glyph — the old unicode triangles (▾▴◂▸)
+   rendered small and inconsistently across fonts, and the left/right
+   glyphs were picked backwards to begin with (pointed away from the
+   grid). Rotating one shape per direction is both bigger/crisper and
+   impossible to get backwards the same way again. */
 .entryArrow {
   position: absolute;
+  display: flex;
   color: var(--beam);
-  font-size: 1.1rem;
-  line-height: 1;
-  text-shadow: 0 0 8px var(--beam-glow), 0 0 16px var(--beam-glow);
+  filter: drop-shadow(0 0 4px var(--beam-glow)) drop-shadow(0 0 8px var(--beam-glow));
   z-index: 5;
   animation: beamPulse 1.8s ease-in-out infinite;
   pointer-events: none;
@@ -43,13 +47,13 @@
    source/target tint below. */
 .entryArrow2 {
   color: #2dd4bf;
-  text-shadow: 0 0 8px rgba(45, 212, 191, 0.55), 0 0 16px rgba(45, 212, 191, 0.35);
+  filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.6)) drop-shadow(0 0 8px rgba(45, 212, 191, 0.4));
 }
 
 /* Beam C (three-beam puzzles) — magenta, the third hue in the set. */
 .entryArrow3 {
   color: #f472b6;
-  text-shadow: 0 0 8px rgba(244, 114, 182, 0.55), 0 0 16px rgba(244, 114, 182, 0.35);
+  filter: drop-shadow(0 0 4px rgba(244, 114, 182, 0.6)) drop-shadow(0 0 8px rgba(244, 114, 182, 0.4));
 }
 
 /* ── Playing surface ──────────────────────────────────────────── */
