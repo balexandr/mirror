@@ -3,7 +3,11 @@ import puzzles from '../data/puzzles.js';
 import { simulateAllBeams, isSolved, mirrorCount, cycleOrientation, findSolution } from '../utils/beam.js';
 
 const STORAGE_KEY = 'mirror-game-state';
-const EPOCH = '2026-08-17';
+// Reset to today: 2026-08-17 through 2026-08-19 were build/iteration days
+// (five separate mechanic rewrites under the same date keys — hidden beam,
+// two-beam, N-beam, several difficulty passes) rather than real puzzle
+// history. Today starts the game over as puzzle #1 for real.
+const EPOCH = '2026-08-20';
 export const MAX_FIRES = 5;
 
 function getTodayKey() {

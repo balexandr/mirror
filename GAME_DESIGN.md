@@ -461,3 +461,38 @@ center to its arrow's center in a real browser: alignment landed
 within 1-3.5px on both axes (previously up to ~20px off), and the
 target reticles now visibly match their own source's color instead of
 the primary beam alone showing gold.
+
+## Reset to day 1, puzzles through year end (2026-08-20)
+
+2026-08-17 through 2026-08-19 were build/iteration days, not real
+puzzle history — the puzzle under each of those date keys got
+rewritten wholesale five separate times (grid size, hidden-beam
+mechanic, two-beam, N-beam, multiple difficulty passes). Reset for a
+real launch:
+
+- `EPOCH` moved from `2026-08-17` to `2026-08-20` — today is puzzle
+  #1 again, for real this time.
+- Generated puzzles through **2026-12-31** (134 days) so the game
+  doesn't run dry. Difficulty curve: days 1-7 single-beam gentle
+  ramp, 8-21 single-beam medium, 22-75 two-beam, 76-134 three-beam
+  steady state (with an occasional two-beam breather day — every
+  11th day in that tier) for the rest of the year.
+- Generation used the same "best-of-N random candidates, keep the
+  hardest found" approach as the three-beam pass, but with modest N
+  (250-700 depending on tier) — at this scale (134 puzzles) the goal
+  was every puzzle being genuinely verified and reasonably varied,
+  not each one individually pushed to its hardest possible par the
+  way a single showcase puzzle might be. Par landed in the 1-7 range
+  across the set, which is expected variance from best-of-N at modest
+  N, not a bug — every single one is still real brute-force-verified
+  par (true minimum, 0-mirror confirmed unsolvable), same as always.
+  Whole 134-puzzle generation run completed in well under two
+  minutes — three-beam brute force at 7-8 slots turned out cheap
+  enough that N in the hundreds, not thousands, was sufficient.
+- Verified live: today's puzzle now shows `#1`, 2026-12-31 shows
+  `#134`, and 2027-01-01 (one day past the dataset) still falls back
+  cleanly to the existing "no puzzle yet" state with no errors.
+
+Mirror was already listed in `noodle_games/games.js` and every
+sibling game's `shareAll.js` roster from the initial build
+(2026-08-17) — re-checked, still intact, no action needed there.
