@@ -425,3 +425,39 @@ via computed `transform` on the arrow SVG (`rotate(0deg)` for the
 right-travelling beam, `90deg`/`270deg` for down/up) and visually:
 the magenta arrow on the left edge now points right, into the grid,
 matching its beam's actual direction of travel.
+
+## Two more bugs, same conversation (2026-08-20)
+
+"Make the beam colors starting and ending match, the OG is white and
+ends at yellow" + "arrows need to line up better" — both real, both
+fixed:
+
+- **Color mismatch**: beam 0's source used `var(--beam)` (light
+  lavender/white) but its target used `var(--win)` (gold) — the
+  "starts white, ends yellow" the user described exactly. Beams 1/2
+  (teal/magenta) never had this bug; their `.beam2Marker`/
+  `.beam3Marker` rules already color source and target the same. Fix
+  was to bring beam 0 in line with that existing pattern rather than
+  invent a new one: `.target`/`.targetHit` now use the same lavender
+  hue as `.source`/`.sourceGlyph` instead of gold.
+- **Arrow misalignment**: the entry-arrow `<span>` is a child of
+  `.boardFrame`, which is 2×`--board-pad` (40px) wider than the grid
+  the position percentage was actually computed against (`.gridWrap`
+  sits inset by that padding on every side). A plain `left: {pos}%`
+  was therefore only correct by coincidence at dead center — up to a
+  full `--board-pad` off at the edges. Couldn't just move the arrows
+  inside `.gridWrap` to fix the coordinate space, either — it has
+  `overflow: hidden`, so anything positioned outside its own box (as
+  the arrows need to be, to sit outside the grid) would get clipped.
+  Fixed with `calc()` instead: `left: calc(var(--board-pad) + (100% -
+  var(--board-pad) * 2) * pos-as-fraction)`, keeping the arrows as
+  boardFrame children but correcting for the padding offset in the
+  math. `--board-pad` is a real CSS custom property on `.boardFrame`
+  now (was a bare `20px` in the padding declaration), so the JS and
+  CSS can't drift out of sync the way a duplicated magic number would.
+
+Verified both by comparing each source cell's actual bounding-box
+center to its arrow's center in a real browser: alignment landed
+within 1-3.5px on both axes (previously up to ~20px off), and the
+target reticles now visibly match their own source's color instead of
+the primary beam alone showing gold.

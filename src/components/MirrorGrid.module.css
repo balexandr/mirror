@@ -1,9 +1,10 @@
 /* ── Outer glass frame ─────────────────────────────────────────── */
 .boardFrame {
+  --board-pad: 20px;
   position: relative;
   width: 100%;
   margin: 26px 0 10px;
-  padding: 20px;
+  padding: var(--board-pad);
   border-radius: 20px;
   box-sizing: border-box;
 
@@ -300,9 +301,14 @@
 }
 
 /* ── Target ──────────────────────────────────────────────────── */
+/* Same hue as its own source (var(--beam), the light lavender) — it used
+   to borrow the universal "win" gold here, so beam 0 alone started white
+   and ended yellow while beams 1/2 (teal/magenta below) already matched
+   start to end. This brings it in line with them instead of the other
+   way around. */
 .target {
-  color: var(--win);
-  border-color: rgba(251, 191, 36, 0.4);
+  color: var(--beam);
+  border-color: rgba(165, 180, 252, 0.4);
 }
 
 /* Beam B's source/target — same shapes, teal instead of indigo/gold so the
@@ -357,10 +363,10 @@
 }
 
 .targetHit {
-  border-color: rgba(251, 191, 36, 0.75);
+  border-color: rgba(165, 180, 252, 0.75);
   box-shadow:
-    inset 1px 1px 0 rgba(251, 191, 36, 0.25),
-    0 0 18px rgba(251, 191, 36, 0.4);
+    inset 1px 1px 0 rgba(199, 210, 254, 0.25),
+    0 0 18px rgba(165, 180, 252, 0.4);
   animation: bounceIn 0.4s ease;
 }
 

@@ -105,7 +105,14 @@ export default function MirrorGrid({ puzzle, mirrors, beams, beamStyle, fireId, 
             key={i}
             className={`${styles.entryArrow} ${entryModClass ? styles[entryModClass] : ''} ${styles[`side${entry.side[0].toUpperCase()}${entry.side.slice(1)}`]}`}
             style={{
-              [entry.side === 'top' || entry.side === 'bottom' ? 'left' : 'top']: `${entry.pos}%`,
+              // NOT a plain `${pos}%` — this span is positioned relative to
+              // boardFrame's own box, which is 2×--board-pad WIDER than the
+              // grid the % was computed against (gridWrap sits inset by
+              // that padding). A plain percentage was off by up to a full
+              // --board-pad at the edges (correct only by coincidence at
+              // dead center), which is what "arrows not lined up" was.
+              [entry.side === 'top' || entry.side === 'bottom' ? 'left' : 'top']:
+                `calc(var(--board-pad) + (100% - (var(--board-pad) * 2)) * ${entry.pos / 100})`,
               pointerEvents: 'none',
             }}
             aria-hidden="true"
