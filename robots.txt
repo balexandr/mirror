@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://balexandr.github.io/mirror/sitemap.xml
