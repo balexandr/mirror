@@ -170,10 +170,10 @@ export function useGameState() {
   const generateShareText = useCallback(() => {
     if (!puzzle || gameStatus === 'playing') return '';
     if (gameStatus === 'lost') {
-      return `Mirror #${puzzleNumber} 🔦 X/${MAX_FIRES}\nnoodlegames.co`;
+      return `Mirror #${puzzleNumber} 🔦 X/${MAX_FIRES}`;
     }
     const bulbs = '💡'.repeat(stars) + '⚫'.repeat(3 - stars);
-    return `Mirror #${puzzleNumber} 🔦 ${firesUsedAtWin}/${MAX_FIRES} ${bulbs}\nnoodlegames.co`;
+    return `Mirror #${puzzleNumber} 🔦 ${firesUsedAtWin}/${MAX_FIRES} ${bulbs}`;
   }, [puzzle, gameStatus, stars, firesUsedAtWin, puzzleNumber]);
 
   return {
