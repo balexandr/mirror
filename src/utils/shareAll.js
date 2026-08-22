@@ -22,6 +22,7 @@ const GAMES = [
   { id: 'zeroin', label: 'Zero In' },
   { id: 'oddoneout', label: 'Odd One Out' },
   { id: 'mirror', label: 'Mirror' },
+  { id: 'realm', label: 'Realm' },
 ];
 
 const KEY_PREFIX = 'noodle-share-';
