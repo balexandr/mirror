@@ -496,3 +496,61 @@ real launch:
 Mirror was already listed in `noodle_games/games.js` and every
 sibling game's `shareAll.js` roster from the initial build
 (2026-08-17) — re-checked, still intact, no action needed there.
+
+## Difficulty switched to day-of-week (2026-08-23)
+
+The days-since-launch curve above (1-21 single-beam, 22-75 two-beam,
+76-134 three-beam) meant "today's difficulty" depended on when you
+happened to start playing relative to launch day, not on what day of
+the week it actually was — the user noticed this directly ("I did it
+today and it was just one beam" on what was, coincidentally, a Sunday
+— the day that should be hardest under a weekday scheme). Every other
+Noodle game with escalating difficulty (Pathways, Sprout, Realm)
+already scales by day of week, not launch day — Mirror was the
+outlier.
+
+Rebuilt `scripts/generate-puzzles.mjs` from scratch (it never existed
+as a committed file before — the original generation was ad-hoc and
+only its OUTPUT was ever saved to `puzzles.js`, closing a real gap
+flagged by `beam.js`'s own header comment referencing a
+`scripts/verify-puzzles.mjs` that never actually existed in the repo).
+
+- New `WEEKLY_DIFFICULTY` table, Monday (1 beam, par floor 1) ramping
+  to Sunday (3 beams, par floor 4, the "boss day").
+- Dates before 2026-08-24 (i.e. 2026-08-20 through 2026-08-23, already
+  shipped and likely already played) were left completely untouched —
+  only 2026-08-24 onward was regenerated. Same "don't rewrite a puzzle
+  someone may have already played" rule from the EPOCH reset history
+  above; the existing puzzleFingerprint save-guard would have made it
+  *safe* either way, but there's no reason to touch played history.
+- **Pure-random source/target/obstacle placement turned out to almost
+  never be solvable once 2+ beams share one mirror layout** — measured
+  ~2.6% solvable out of 2000 random attempts for a 2-beam tier, and
+  even those topped out at par 2, never reaching the harder tiers'
+  floor. Fixed by constructing each beam's path deliberately (walk a
+  random number of bends from its source, reserving every cell the
+  route touches) before ever calling the solver — this guarantees at
+  least one valid solution exists, so the retry loop is hunting for
+  "meets this tier's difficulty floor," not "is solvable at all." That
+  jumped it to 100% solvable with a real spread of par values.
+- Reused `findSolution`/`mirrorCount` straight from `src/utils/beam.js`
+  (the exact function the client uses for its own loss-reveal screen)
+  to brute-force verify every generated puzzle's par — no separate
+  reimplementation to drift out of sync.
+- **Caught and fixed a shape-drift bug before shipping**: bend count
+  per beam was computed as `Math.ceil(tier.slots / tier.beams)`, which
+  commonly overshoots (7 slots over 3 beams asks for 3 bends each = 9,
+  not 7) — Sunday's puzzles were shipping with 9 tappable slots
+  instead of the intended 7 until a re-verification pass that checks
+  actual shape against the difficulty table (not just solvability)
+  caught it. Fixed by capping constructed bend cells to the tier's
+  exact slot count before padding/output.
+- All 130 regenerated puzzles (2026-08-24 through 2026-12-31)
+  independently re-verified after the fix: exact shape match to the
+  difficulty table (beams/slots/fixed counts), par re-derived from
+  scratch via `findSolution` and compared against the shipped value,
+  zero mismatches, zero unsolvable puzzles.
+- Verified live end-to-end (not just the offline solver): mocked the
+  browser's clock to a Monday and to a Sunday, played each real
+  generated puzzle's true solution through the actual UI, both
+  produced "Perfect beam!" with the exact expected par.
