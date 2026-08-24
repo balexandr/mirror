@@ -554,3 +554,42 @@ flagged by `beam.js`'s own header comment referencing a
   browser's clock to a Monday and to a Sunday, played each real
   generated puzzle's true solution through the actual UI, both
   produced "Perfect beam!" with the exact expected par.
+
+## Grid size now scales by weekday too (2026-08-24)
+
+Grid was a flat 9x9 every day regardless of tier. On a light Monday
+(1 beam, 3 slots) that meant a huge mostly-empty 81-cell board with 3
+tappable cells lost somewhere in it — user feedback, verbatim: "the
+map was like 9x9 but the puzzle was very tiny." Added `size` to the
+`WEEKLY_DIFFICULTY` table, same 5→9 curve Pathways already uses:
+Monday 5x5 up to Sunday 9x9. `buildCandidate`/`buildBeamPath` now take
+`tier.size` instead of a fixed global constant.
+
+Regenerated from **2026-08-24 (today) forward**, not just tomorrow —
+normally a puzzle someone may have already played is left untouched
+(see the EPOCH-reset history above), but the user's report named today
+specifically, so today got rebuilt too rather than leaving the exact
+thing they were pointing at broken until tomorrow. Mirror's
+puzzleFingerprint save-guard makes this safe either way.
+
+**Found and fixed a real, pre-existing bug while re-verifying**, unrelated
+to the size change: `buildBeamPath`'s final run toward the target could
+have its very first step blocked (out of bounds or into a reserved
+cell) and silently leave `r,c` at the last bend's position without
+moving — meaning the beam's "target" came out identical to one of its
+own slot cells. Scanned the full 134-puzzle set for it: **35 of 134
+already-shipped puzzles had a target cell that coincided with a
+slot/fixed/source cell** (target rendered disabled per
+`MirrorGrid.jsx`'s disabled-if-`isTarget` check, so nothing was
+literally unplayable, but the target cell also carried slot styling —
+a real visual bug, and a latent trap for anything that assumes those
+groups are disjoint). Fixed by rejecting the beam construction outright
+if the final run can't take even one step, instead of returning a
+degenerate path. Re-verification now explicitly checks every
+source/target/fixed/slot cell across a puzzle is mutually distinct, in
+addition to shape/solvability/par — 130 regenerated puzzles (today
+onward), zero collisions, zero shape mismatches, zero par mismatches.
+- Verified live again post-fix: solved today's real (now 5x5) puzzle
+  through the actual UI — 3 mirrors, par 3, "Perfect beam!" — and
+  screenshotted the board to confirm it visually reads as a real
+  puzzle now, not empty space with a few buttons in it.

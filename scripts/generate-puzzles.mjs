@@ -34,22 +34,28 @@ import { findSolution, mirrorCount } from '../src/utils/beam.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const SIZE = 9;
-const START_DATE = process.argv[2] || '2026-08-24'; // first date to regenerate (inclusive)
+const START_DATE = process.argv[2] || '2026-08-25'; // first date to regenerate (inclusive)
 const END_DATE = '2026-12-31'; // keep the suite's existing "don't run dry before year end" horizon
 
 // Day of week difficulty table, Monday -> Sunday, same convention as
 // Pathways/Sprout/Realm's WEEKLY_DIFFICULTY. `minPar` is a floor, not a
 // target - candidates below it get rejected as too easy for that slot and
 // regenerated, so difficulty only ratchets up through the week, never down.
+//
+// `size` now scales with the week too (5x5 Monday -> 9x9 Sunday, same
+// curve Pathways uses) - it used to be a flat 9x9 every single day, which
+// on a light Monday (1 beam, 3 slots) meant a huge mostly-empty board with
+// a tiny handful of tappable cells scattered across it. A small board with
+// a few slots reads as a real puzzle; a 9x9 board with 3 slots just reads
+// as empty space with 3 buttons hiding in it.
 const WEEKLY_DIFFICULTY = [
-  { beams: 1, slots: 3, fixed: 0, minPar: 1 }, // Monday
-  { beams: 1, slots: 4, fixed: 1, minPar: 2 }, // Tuesday
-  { beams: 1, slots: 4, fixed: 1, minPar: 2 }, // Wednesday
-  { beams: 2, slots: 5, fixed: 2, minPar: 3 }, // Thursday
-  { beams: 2, slots: 6, fixed: 2, minPar: 3 }, // Friday
-  { beams: 3, slots: 6, fixed: 3, minPar: 3 }, // Saturday
-  { beams: 3, slots: 7, fixed: 4, minPar: 4 }, // Sunday - the "boss day"
+  { size: 5, beams: 1, slots: 3, fixed: 0, minPar: 2 }, // Monday
+  { size: 6, beams: 1, slots: 4, fixed: 1, minPar: 2 }, // Tuesday
+  { size: 6, beams: 1, slots: 4, fixed: 1, minPar: 3 }, // Wednesday
+  { size: 7, beams: 2, slots: 5, fixed: 2, minPar: 3 }, // Thursday
+  { size: 7, beams: 2, slots: 6, fixed: 2, minPar: 3 }, // Friday
+  { size: 8, beams: 3, slots: 6, fixed: 3, minPar: 3 }, // Saturday
+  { size: 9, beams: 3, slots: 7, fixed: 4, minPar: 4 }, // Sunday - the "boss day"
 ];
 
 function difficultyForDate(dateKey) {
@@ -148,8 +154,15 @@ function buildBeamPath(rng, startEdge, desiredBends, reserved, size) {
 
   // Final run toward whatever cell becomes the target - stop early (rather
   // than fail) if it would leave the grid or cross a reserved cell, so a
-  // short final leg is fine, it just makes for a closer target.
+  // short final leg is fine, it just makes for a closer target. But if the
+  // very FIRST step of that run is already blocked, r/c never move past
+  // the last bend cell - and since that cell is already in pathCells (and
+  // about to become a slot), the "target" would silently end up being the
+  // exact same cell as one of the slots. Caught this shipping in 35 of 134
+  // already-generated puzzles: reject outright rather than let a beam's
+  // target coincide with a slot/source cell.
   const finalRun = 1 + Math.floor(rng() * 4);
+  let tookStep = false;
   for (let s = 0; s < finalRun; s++) {
     const [dr, dc] = STEP[dir];
     const nr = r + dr, nc = c + dc;
@@ -158,7 +171,9 @@ function buildBeamPath(rng, startEdge, desiredBends, reserved, size) {
     if (reserved.has(k) || pathCells.includes(k)) break;
     r = nr; c = nc;
     pathCells.push(k);
+    tookStep = true;
   }
+  if (!tookStep) return null;
 
   return {
     source: { row: startEdge.row, col: startEdge.col, dir: startEdge.dir },
@@ -169,9 +184,10 @@ function buildBeamPath(rng, startEdge, desiredBends, reserved, size) {
 }
 
 function buildCandidate(rng, tier) {
+  const size = tier.size;
   const reserved = new Set();
-  const edges = shuffle(edgeCellsWithDirs(SIZE), rng);
-  const interior = shuffle(allCells(SIZE), rng);
+  const edges = shuffle(edgeCellsWithDirs(size), rng);
+  const interior = shuffle(allCells(size), rng);
   const bendsPerBeam = Math.ceil(tier.slots / tier.beams);
 
   const beams = [];
@@ -182,7 +198,7 @@ function buildCandidate(rng, tier) {
     let built = null;
     for (let tries = 0; tries < 50 && edgeIdx < edges.length; tries++) {
       const src = edges[edgeIdx++];
-      built = buildBeamPath(rng, src, bendsPerBeam, reserved, SIZE);
+      built = buildBeamPath(rng, src, bendsPerBeam, reserved, size);
       if (built) break;
     }
     if (!built) return null;
@@ -227,7 +243,7 @@ function buildCandidate(rng, tier) {
   }
   if (fixed.length < tier.fixed) return null;
 
-  return { size: SIZE, beams, fixed, slots };
+  return { size, beams, fixed, slots };
 }
 
 function generatePuzzle(dateKey, maxAttempts = 500) {
