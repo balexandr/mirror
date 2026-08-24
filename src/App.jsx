@@ -106,6 +106,7 @@ export default function App() {
           {shareAllCopied ? '✓ Copied' : `⬆ Share all completed (${shareAllCount}/${TOTAL_GAMES})`}
         </button>
       )}
+      <a href="https://noodlegames.co/privacy" target="_blank" rel="noopener noreferrer" className={styles.footerPrivacy}>Privacy Policy</a>
       <span className={styles.footerCopy}>© {currentYear} NoodleGames.co</span>
     </footer>
   );

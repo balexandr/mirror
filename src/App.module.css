@@ -280,6 +280,18 @@
   border-color: var(--accent);
 }
 
+.footerPrivacy {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.15s;
+}
+
+.footerPrivacy:hover {
+  opacity: 0.8;
+}
+
 .footerCopy {
   font-size: 0.72rem;
   color: var(--text-dim);
