@@ -593,3 +593,47 @@ onward), zero collisions, zero shape mismatches, zero par mismatches.
   through the actual UI — 3 mirrors, par 3, "Perfect beam!" — and
   screenshotted the board to confirm it visually reads as a real
   puzzle now, not empty space with a few buttons in it.
+
+## "Way too easy" again, ~10 days quiet (2026-09-02)
+
+No complaints since the 2026-08-24 grid-size fix — first fresh "too
+easy" report since the hidden-beam/N-beam mechanic work actually
+landed. Unlike the four straight "still too easy" reports on
+2026-08-17 (see the mechanic-pivot section above), this isn't the
+same failure mode: the core loop that stopped players from converging
+by trial-and-error (hidden beam, snapshot-on-fire) was already in
+place and had held for over a week. Read as the puzzles themselves
+needing to ramp further now that the easy exploit is gone, not another
+mechanic problem — so this pass raises numbers on top of the existing
+mechanic instead of replacing it, and cuts the other lever that still
+let a player brute-force converge: fire count.
+
+- **`MAX_FIRES` cut 5 → 3.** Five attempts against a small slot count
+  (search space maxes out at 3^slots, ≤2187 even on Sunday) left real
+  room to narrow it down by elimination across fires even with the
+  beam hidden pre-fire. Three fires is the same Wordle-style shape
+  every other Noodle game already uses (Squint, Knot) and removes
+  most of that runway — you mostly get one real shot plus one
+  correction. `starsForFires` re-tiered to match (1 fire = 3★, 2 = 2★,
+  3 = 1★); `HowToPlay.jsx` copy and legend updated to say 3, not 5.
+  `ResultScreen.jsx`/`App.jsx` already read `maxFires` off state
+  rather than hardcoding it, so no changes needed there.
+- **`WEEKLY_DIFFICULTY` floors raised across every day**, not just the
+  hard end — Monday alone went from 3 slots/0 fixed/par-floor-2 to 4
+  slots/1 fixed/par-floor-3, i.e. the easiest day now carries what
+  used to be Tuesday's load. Full new table's in
+  `scripts/generate-puzzles.mjs`. Regenerated **2026-09-03 through
+  2026-12-31** (120 puzzles) — 2026-09-02 (today, already
+  played/complained-about) and everything before it left untouched,
+  same "don't rewrite a puzzle someone may have already played" rule
+  as every prior difficulty pass; today's MAX_FIRES change still
+  applies going forward since that's global state, not per-puzzle
+  data.
+- Verified generation itself, not just that it ran: sampled all 120
+  regenerated puzzles' actual shape (size/beams/slots/fixed) against
+  the table (exact match, zero drift) and their brute-force-verified
+  par against each day's new floor (zero puzzles below floor). Par
+  landed noticeably higher across the board — Monday 4 (was 1-3
+  historically), Sunday 6-8 (was 4-7) — real difficulty increase, not
+  just a relabeled floor. Whole 120-puzzle regeneration ran in ~2s,
+  still cheap at these slot counts.

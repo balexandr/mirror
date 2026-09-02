@@ -8,7 +8,7 @@ const STORAGE_KEY = 'mirror-game-state';
 // two-beam, N-beam, several difficulty passes) rather than real puzzle
 // history. Today starts the game over as puzzle #1 for real.
 const EPOCH = '2026-08-20';
-export const MAX_FIRES = 5;
+export const MAX_FIRES = 3;
 
 function getTodayKey() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
@@ -19,9 +19,9 @@ function getTodayKey() {
 // screen, but it no longer gates the rating — the thing that's actually
 // hard now is committing to a beam blind and getting it right early.
 function starsForFires(fires) {
-  if (fires <= 2) return 3;
-  if (fires === 3) return 2;
-  return 1; // 4 or 5
+  if (fires <= 1) return 3;
+  if (fires === 2) return 2;
+  return 1; // 3
 }
 
 // A cheap content fingerprint for a puzzle — not cryptographic, just enough

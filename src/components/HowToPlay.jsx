@@ -34,16 +34,16 @@ export default function HowToPlay({ onClose }) {
         <ul className={styles.rules}>
           <li>Plan your mirrors, then press <strong>Fire Beam</strong> to see where the light actually goes</li>
           <li>A fired shot leaves a dim trace so you can adjust and fire again</li>
-          <li>5 fires per puzzle — like guesses. Run out, and it's a loss for the day</li>
+          <li>3 fires per puzzle — like guesses. Run out, and it's a loss for the day</li>
           <li>Fewer fires to solve it = more stars</li>
           <li>Harder puzzles have <strong>multiple beams</strong> sharing the same mirrors — every one has to land</li>
           <li>A new puzzle every day</li>
         </ul>
 
         <div className={styles.legend}>
-          <span>💡💡💡 Solved in 1–2 fires</span>
-          <span>💡💡⚫ Solved in 3</span>
-          <span>💡⚫⚫ Solved in 4–5</span>
+          <span>💡💡💡 Solved in 1 fire</span>
+          <span>💡💡⚫ Solved in 2</span>
+          <span>💡⚫⚫ Solved in 3</span>
         </div>
 
         <button className={styles.playBtn} onClick={onClose}>Got it — let's play</button>
