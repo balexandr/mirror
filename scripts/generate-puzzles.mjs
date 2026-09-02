@@ -49,7 +49,7 @@ const END_DATE = '2026-12-31'; // keep the suite's existing "don't run dry befor
 // a few slots reads as a real puzzle; a 9x9 board with 3 slots just reads
 // as empty space with 3 buttons hiding in it.
 const WEEKLY_DIFFICULTY = [
-  { size: 5, beams: 1, slots: 4, fixed: 1, minPar: 3 }, // Monday
+  { size: 5, beams: 1, slots: 5, fixed: 1, minPar: 3 }, // Monday
   { size: 6, beams: 1, slots: 5, fixed: 1, minPar: 3 }, // Tuesday
   { size: 7, beams: 1, slots: 5, fixed: 2, minPar: 4 }, // Wednesday
   { size: 7, beams: 2, slots: 6, fixed: 2, minPar: 4 }, // Thursday
