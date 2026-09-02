@@ -11,8 +11,8 @@ function cellKey(row, col) {
 // in — got a left-pointing glyph, and 'left' got a right-pointing one).
 // Up/down were fine; only the horizontal cases were backwards. Now this
 // just returns the actual travel direction and the renderer draws an SVG
-// arrowhead rotated to match it, rather than trusting a hand-picked glyph
-// per case (which is how the mismatch slipped in unnoticed).
+// flashlight glyph rotated to match it, rather than trusting a hand-picked
+// glyph per case (which is how the mismatch slipped in unnoticed).
 function arrowPlacement(source, size) {
   const cellPct = 100 / size;
   const center = (n) => (n + 0.5) * cellPct;
@@ -25,7 +25,7 @@ function arrowPlacement(source, size) {
   }
 }
 
-// Degrees to rotate a right-pointing arrowhead so it points the given way.
+// Degrees to rotate a right-pointing flashlight so it points the given way.
 const ARROW_ROTATION = { right: 0, down: 90, left: 180, up: 270 };
 
 // Turns a beam's {cells,result} into drawable <line> segments in the same
@@ -118,12 +118,23 @@ export default function MirrorGrid({ puzzle, mirrors, beams, beamStyle, fireId, 
             aria-hidden="true"
           >
             <svg
-              viewBox="0 0 16 16"
-              width="16"
-              height="16"
+              viewBox="0 0 18 18"
+              width="18"
+              height="18"
               style={{ transform: `rotate(${ARROW_ROTATION[entry.dir]}deg)` }}
             >
-              <path d="M2 2 L14 8 L2 14 Z" fill="currentColor" />
+              {/* Flashlight, pointing right by default (rotated per-direction
+                  above, same as the old arrowhead). Body + flared head +
+                  a bright lens right at the tip — the lens sits at the same
+                  local spot the old arrow's point did, so it still lines up
+                  with the board edge, but now the "this is where the beam
+                  starts" read is literal instead of an abstract triangle. */}
+              <rect x="2" y="6" width="7" height="6" rx="1" fill="currentColor" />
+              <rect x="9" y="4.5" width="4" height="9" rx="1" fill="currentColor" />
+              <rect x="13" y="6.5" width="1.6" height="5" rx="0.7" fill="#fff8e1" />
+              <line x1="15.5" y1="6" x2="17.3" y2="3.6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.55" />
+              <line x1="15.7" y1="9" x2="17.6" y2="9" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.55" />
+              <line x1="15.5" y1="12" x2="17.3" y2="14.4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.55" />
             </svg>
           </span>
         );

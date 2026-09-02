@@ -23,11 +23,16 @@
 }
 
 /* ── Entry arrow (beam origin marker, sits outside the board) ───── */
-/* An SVG arrowhead, not a text glyph — the old unicode triangles (▾▴◂▸)
-   rendered small and inconsistently across fonts, and the left/right
-   glyphs were picked backwards to begin with (pointed away from the
-   grid). Rotating one shape per direction is both bigger/crisper and
-   impossible to get backwards the same way again. */
+/* An SVG flashlight, not a text glyph or plain arrowhead — the old unicode
+   triangles (▾▴◂▸) rendered small and inconsistently across fonts, and the
+   left/right glyphs were picked backwards to begin with (pointed away from
+   the grid). A later plain-arrowhead SVG fixed the direction bug but still
+   read as ambiguous ("arrow pointing into the board" vs. "this is where the
+   beam originates") — swapped for a flashlight glyph with a bright lens
+   right at the tip so the origin point is literal. Rotating one shape per
+   direction is both bigger/crisper and impossible to get backwards the
+   same way again. Class name kept as .entryArrow to avoid touching every
+   call site for a glyph swap. */
 .entryArrow {
   position: absolute;
   display: flex;
