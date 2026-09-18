@@ -52,19 +52,6 @@ html, body {
 body {
   background-color: #08091a;
   background-image:
-    /* Faint refracted rays fanning from an off-center light source */
-    conic-gradient(
-      from 200deg at 30% 20%,
-      rgba(99, 102, 241, 0.08) 0deg,
-      transparent 8deg,
-      transparent 22deg,
-      rgba(165, 180, 252, 0.06) 30deg,
-      transparent 38deg,
-      transparent 55deg,
-      rgba(99, 102, 241, 0.07) 63deg,
-      transparent 70deg,
-      transparent 360deg
-    ),
     /* Crystalline facet lines, like cracked glass */
     repeating-linear-gradient(
       35deg,
@@ -83,6 +70,35 @@ body {
     /* Base */
     linear-gradient(170deg, #12132b 0%, #08091a 100%);
   background-attachment: fixed;
+}
+
+/* Refracted rays slowly rotate around the light source, like a turning
+   crystal facet catching the light instead of a fixed beam. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: conic-gradient(
+    from 200deg at 30% 20%,
+    rgba(99, 102, 241, 0.08) 0deg,
+    transparent 8deg,
+    transparent 22deg,
+    rgba(165, 180, 252, 0.06) 30deg,
+    transparent 38deg,
+    transparent 55deg,
+    rgba(99, 102, 241, 0.07) 63deg,
+    transparent 70deg,
+    transparent 360deg
+  );
+  transform-origin: 30% 20%;
+  animation: facetRotate 70s linear infinite;
+  z-index: 0;
+}
+
+@keyframes facetRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 body::after {
