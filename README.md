@@ -11,20 +11,20 @@ Part of the [NoodleGames](https://noodlegames.co) family alongside **Knot** and 
 Tap the glowing dashed cells to cycle a mirror through `/` → `\` → empty. Mirror placement is always visible — the beam itself isn't, until you press **Fire Beam**.
 
 - A fired shot reveals the beam's actual path and leaves a dim trace behind so you have something to react to before firing again.
-- **5 fires per puzzle**, same shape as guesses in a word game. Solve it before they run out.
+- **3 fires per puzzle**, same shape as guesses in a word game. Solve it before they run out.
 - Harder puzzles have **multiple beams sharing the same mirrors** — every beam has to land on its own target with one shared layout, so a placement that helps one can wreck another.
 - Run out of fires without solving and the puzzle reveals a real solution (computed on the spot, never shipped in the puzzle data as a spoiler) — that's a loss for the day.
 - Resets daily at **midnight ET**.
 
 ## Scoring
 
-Stars reward planning, not mirror count: solve it in 1–2 fires for 3★, 3 fires for 2★, 4–5 fires for 1★. The minimum mirror count ("par") is still shown as a bonus stat, brute-force verified for every puzzle, but it doesn't gate the rating — committing to the right shot early does.
+Stars reward planning, not mirror count: solve it on your **1st fire for 3★**, **2nd for 2★**, **3rd for 1★**. The minimum mirror count ("par") is still shown as a bonus stat, brute-force verified for every puzzle, but it doesn't gate the rating — committing to the right shot early does.
 
 ---
 
 ## Sharing
 
-After a finish (win or loss) you can share your result — fires used out of 5, plus a star readout, or an `X/5` if you ran out. Once you've finished at least one NoodleGame today, a **Share all completed** button appears in the footer, letting you share every game you've solved today in one message.
+After a finish (win or loss) you can share your result — fires used out of 3, plus a star readout, or an `X/3` if you ran out. Once you've finished at least one NoodleGame today, a **Share all completed** button appears in the footer, letting you share every game you've solved today in one message.
 
 ---
 
