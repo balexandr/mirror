@@ -36,6 +36,4 @@ React + Vite · CSS Modules · localStorage · GitHub Pages
 
 ## Puzzles
 
-Puzzles run from **August 20, 2026** (puzzle #1) through **December 31, 2026** — 134 days, keyed by date in `src/data/puzzles.js`. Each entry has a `size`, one or more `beams` (`{source, target}` pairs — more than one means the shared-mirror hard mode), `fixed` obstacles (walls and pre-set mirrors), the tappable `slots`, and a brute-force-verified `par`. Difficulty ramps from a single gentle beam in week one up to three beams sharing one board for the long steady state through year end.
-
-See [GAME_DESIGN.md](./GAME_DESIGN.md) for the full design history — mechanic pivots, bugs found and fixed, and why things are built the way they are.
+Puzzles run from **August 20, 2026** (puzzle #1) through **December 31, 2026** — 134 days, keyed by date in `src/data/puzzles.js`. Each entry has a `size`, one or more `beams` (`{source, target}` pairs — more than one means the shared-mirror hard mode), `fixed` obstacles (walls and pre-set mirrors), and the tappable `slots`. Difficulty ramps from a single gentle beam in week one up to three beams sharing one board for the long steady state through year end.
