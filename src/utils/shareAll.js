@@ -23,15 +23,35 @@ const GAMES = [
   { id: 'oddoneout', label: 'Odd One Out' },
   { id: 'mirror', label: 'Mirror' },
   { id: 'realm', label: 'Realm' },
+  { id: 'tandem', label: 'Tandem' },
+  { id: 'dial', label: 'Dial' },
+  { id: 'weave', label: 'Weave' },
 ];
 
 const KEY_PREFIX = 'noodle-share-';
 const COOKIE_DOMAIN = '.noodlegames.co';
 
+// The scoped domain + Secure attribute only make sense on an actual
+// noodlegames.co subdomain over HTTPS - a localhost/preview host can't set
+// a cookie for an unrelated domain, and Secure cookies are rejected outright
+// over plain http. Falls back to a same-origin, non-Secure cookie anywhere
+// else so local dev can actually see the Share All button, instead of it
+// silently never appearing.
+function onProdDomain() {
+  try {
+    return window.location.hostname.endsWith('.noodlegames.co');
+  } catch {
+    return false;
+  }
+}
+
 function setSharedCookie(name, value) {
   try {
     const maxAge = 2 * 24 * 60 * 60; // 2 days is plenty to cover "today" everywhere
-    document.cookie = `${name}=${encodeURIComponent(value)}; domain=${COOKIE_DOMAIN}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+    const prod = onProdDomain();
+    const domainPart = prod ? `domain=${COOKIE_DOMAIN}; ` : '';
+    const securePart = prod ? 'Secure; ' : '';
+    document.cookie = `${name}=${encodeURIComponent(value)}; ${domainPart}path=/; max-age=${maxAge}; SameSite=Lax; ${securePart}`;
   } catch {}
 }
 
