@@ -155,7 +155,7 @@
   color: var(--text);
 }
 
-/* ── Fire beam — the primary commit action ── */
+/* Fire beam: the primary commit action */
 .fireBtn {
   width: 100%;
   margin-top: 0.75rem;
@@ -261,6 +261,10 @@
 .footerLogo:hover { opacity: 0.8; }
 
 .footerShareAll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   margin-top: 2px;
   padding: 6px 14px;
   border-radius: 999px;

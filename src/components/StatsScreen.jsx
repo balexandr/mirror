@@ -1,3 +1,4 @@
+import { IconClose, IconStar } from './Icons';
 import styles from './StatsScreen.module.css';
 
 export default function StatsScreen({ stats, winPct, avgStars, onClose }) {
@@ -6,7 +7,7 @@ export default function StatsScreen({ stats, winPct, avgStars, onClose }) {
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><IconClose /></button>
         <h2 className={styles.title}>Statistics</h2>
 
         <div className={styles.statsRow}>
@@ -35,7 +36,9 @@ export default function StatsScreen({ stats, winPct, avgStars, onClose }) {
             const pct = Math.round((count / maxDist) * 100);
             return (
               <div key={n} className={styles.distRow}>
-                <span className={styles.distLabel}>{n === 0 ? 'X' : '★'.repeat(n)}</span>
+                <span className={styles.distLabel}>
+                  {n === 0 ? 'X' : Array.from({ length: n }).map((_, i) => <IconStar key={i} size={11} />)}
+                </span>
                 <div className={styles.barTrack}>
                   <div
                     className={`${styles.bar} ${n === 0 ? styles.barLost : ''}`}
@@ -48,7 +51,7 @@ export default function StatsScreen({ stats, winPct, avgStars, onClose }) {
             );
           })}
         </div>
-        <p className={styles.avgStarsNote}>Average {avgStars}★ per solve</p>
+        <p className={styles.avgStarsNote}>Average {avgStars}<IconStar size={11} /> per solve</p>
       </div>
     </div>
   );

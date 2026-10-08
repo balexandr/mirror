@@ -27,6 +27,9 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--surface);
   color: var(--text-secondary);
   border-radius: 50%;
@@ -127,6 +130,17 @@
   font-size: 0.78rem;
   color: var(--text-secondary);
   margin-bottom: 1.25rem;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.legendBulbs {
+  display: inline-flex;
+  color: var(--accent);
 }
 
 /* ── Play button ── */

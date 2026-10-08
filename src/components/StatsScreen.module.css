@@ -27,6 +27,9 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--surface);
   color: var(--text-secondary);
   border-radius: 50%;
@@ -101,11 +104,13 @@
 }
 
 .distLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--win);
   width: 2.6rem;
-  text-align: right;
   flex-shrink: 0;
   letter-spacing: 0.02em;
 }

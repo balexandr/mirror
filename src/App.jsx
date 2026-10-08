@@ -9,6 +9,7 @@ import styles from './App.module.css';
 import { NoodleLogoIcon } from './components/NoodleLogo';
 import { GameLogo } from './components/GameLogo';
 import { recordTodayShare, getCompletedTodayCount, buildShareAllText, TOTAL_GAMES } from './utils/shareAll';
+import { IconCheckmark, IconShare, IconFlashlight } from './components/Icons';
 
 const HOW_TO_PLAY_KEY = 'mirror-how-to-play-seen';
 
@@ -103,7 +104,9 @@ export default function App() {
           className={`${styles.footerShareAll} ${shareAllCopied ? styles.copied : ''}`}
           onClick={handleShareAll}
         >
-          {shareAllCopied ? '✓ Copied' : `⬆ Share all completed (${shareAllCount}/${TOTAL_GAMES})`}
+          {shareAllCopied
+            ? <><IconCheckmark size={13} /> Copied</>
+            : <><IconShare size={13} /> Share all completed ({shareAllCount}/{TOTAL_GAMES})</>}
         </button>
       )}
       <a href="https://noodlegames.co/privacy" target="_blank" rel="noopener noreferrer" className={styles.footerPrivacy}>Privacy Policy</a>
@@ -165,7 +168,7 @@ export default function App() {
 
       <main className={styles.main}>
         <p className={styles.prompt}>
-          {gameStatus === 'lost' ? `Out of fires — here's the solution` : `Plan your shot, then fire the ${beamWord}`}
+          {gameStatus === 'lost' ? `Out of fires, here's the solution` : `Plan your shot, then fire the ${beamWord}`}
         </p>
         {interactive && <p className={styles.hint}>Tap the glowing dashed cells to place mirrors</p>}
 
@@ -181,7 +184,7 @@ export default function App() {
         />
         {beamCount > 1 && interactive && (
           <p className={styles.twoBeamNote}>
-            {beamCount} beams share these mirrors — all {beamCount} must land
+            {beamCount} beams share these mirrors, all {beamCount} must land
           </p>
         )}
 
@@ -196,7 +199,7 @@ export default function App() {
 
         {interactive && (
           <button className={styles.fireBtn} onClick={fireBeam}>
-            🔦 Fire {beamCount > 1 ? 'Beams' : 'Beam'}
+            <IconFlashlight size={16} /> Fire {beamCount > 1 ? 'Beams' : 'Beam'}
             <span className={styles.fireCount}>{firesRemaining}/{maxFires} left</span>
           </button>
         )}

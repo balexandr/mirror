@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { IconClose, IconCheckmark, IconShare, IconSparkle, IconFlashlight, IconBurst, IconBulbState } from './Icons';
 import styles from './ResultScreen.module.css';
 
 const HEADLINES = {
@@ -38,7 +39,7 @@ export default function ResultScreen({
         await navigator.share({ text: shareText });
         return;
       } catch {
-        // cancelled or errored — fall through to copy
+        // cancelled or errored, fall through to copy
       }
     }
     try {
@@ -58,10 +59,14 @@ export default function ResultScreen({
   return (
     <div className={styles.overlay} onClick={onDismiss}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.closeBtn} onClick={onDismiss} aria-label="Close">✕</button>
+        <button className={styles.closeBtn} onClick={onDismiss} aria-label="Close"><IconClose /></button>
 
         <div className={styles.topSection}>
-          <div className={styles.emoji}>{won ? (stars === 3 ? '✨' : stars === 2 ? '💡' : '🔦') : '💥'}</div>
+          <div className={styles.emoji}>
+            {won
+              ? (stars === 3 ? <IconSparkle /> : stars === 2 ? <IconBulbState lit /> : <IconFlashlight size={40} />)
+              : <IconBurst />}
+          </div>
           <h2 className={styles.headline}>{won ? HEADLINES[stars] : 'Out of fires'}</h2>
           <p className={styles.puzzleNum}>Mirror #{puzzleNumber}</p>
         </div>
@@ -71,7 +76,7 @@ export default function ResultScreen({
             <div className={styles.starsRow}>
               {[1, 2, 3].map((n) => (
                 <span key={n} className={n <= stars ? styles.starOn : styles.starOff}>
-                  {n <= stars ? '💡' : '⚫'}
+                  <IconBulbState lit={n <= stars} size={24} />
                 </span>
               ))}
             </div>
@@ -116,7 +121,7 @@ export default function ResultScreen({
         </div>
 
         <button className={`${styles.shareBtn} ${copied ? styles.copied : ''}`} onClick={handleShare}>
-          {copied ? '✓ Copied to clipboard' : '⬆ Share'}
+          {copied ? <><IconCheckmark /> Copied to clipboard</> : <><IconShare /> Share</>}
         </button>
       </div>
     </div>
