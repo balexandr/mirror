@@ -7,6 +7,11 @@
 // way of winning never needs this file to change.
 import { supabase, getDeviceId } from '../lib/supabase'
 
+// Matches the submit_score RPC's own cutoff (noodle_games/LEADERBOARD_DESIGN.md)
+// — these are low-traffic daily puzzles, a 10-slot board rarely filled and
+// read as less exclusive than a top-3 one. Changed from 10 to 3 on 2026-10-13.
+export const LEADERBOARD_SIZE = 3
+
 function isBetter(a, b, direction) {
   return direction === 'asc' ? a < b : a > b
 }
@@ -28,9 +33,9 @@ export function sortRows(rows, config) {
 // submit time, since another score could land between this check and
 // the actual submit.
 export function wouldQualify(score, rows, config) {
-  if (!config || rows.length < 10) return true
+  if (!config || rows.length < LEADERBOARD_SIZE) return true
   const betterCount = rows.filter((r) => isBetter(r.score, score, config.sort_direction)).length
-  return betterCount < 10
+  return betterCount < LEADERBOARD_SIZE
 }
 
 export async function fetchTodayBoard(gameId, dateKey) {
@@ -45,9 +50,9 @@ export async function fetchTodayBoard(gameId, dateKey) {
 
 // This device's own row in today's board, if it's already submitted
 // one — used to skip the initials prompt entirely on a repeat visit
-// instead of re-asking just because the board still has fewer than 10
-// entries (wouldQualify alone can't tell "you're already on it" from
-// "there's room for you").
+// instead of re-asking just because the board still has fewer than
+// LEADERBOARD_SIZE entries (wouldQualify alone can't tell "you're
+// already on it" from "there's room for you").
 export function findMyRow(gameId, rows) {
   const deviceId = getDeviceId(gameId)
   return rows.find((r) => r.device_id === deviceId) || null
