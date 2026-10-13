@@ -95,4 +95,30 @@ export function buildShareAllText(dateKey) {
   return [header, ...entries].join('\n\n');
 }
 
+// Shared "Share All Completed" button handler: tries the Web Share sheet
+// first, falls back to clipboard, falls back further to a hidden-textarea
+// execCommand copy for browsers that have neither. Every game's App.jsx
+// calls this instead of reimplementing the same fallback chain. Returns
+// 'shared' | 'copied' | 'empty' so the caller knows whether to flip its own
+// "Copied" button state - a successful native share shouldn't, the OS
+// share sheet is confirmation enough on its own.
+export async function shareAllCompleted(dateKey) {
+  const text = buildShareAllText(dateKey);
+  if (!text) return 'empty';
+  if (navigator.share) {
+    try { await navigator.share({ text }); return 'shared'; } catch {}
+  }
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  return 'copied';
+}
+
 export const TOTAL_GAMES = GAMES.length;

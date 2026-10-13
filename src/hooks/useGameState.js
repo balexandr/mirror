@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import puzzles from '../data/puzzles.js';
+import puzzles from '../data/puzzles.json';
 import { simulateAllBeams, isSolved, mirrorCount, cycleOrientation, findSolution } from '../utils/beam.js';
 
 const STORAGE_KEY = 'mirror-game-state';

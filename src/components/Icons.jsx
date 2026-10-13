@@ -3,9 +3,7 @@
 // uses. Share text is NOT touched by this: generateShareText() in
 // useGameState.js builds the actual shared result string (🔦 header +
 // 💡⚫ bulbs), plain text sent via SMS/clipboard, a custom icon can't
-// survive that trip, so it stays real Unicode there. The "×" in
-// MirrorGrid.jsx's comment ("2×--board-pad wider") is dimension
-// notation, not a UI icon, also left alone.
+// survive that trip, so it stays real Unicode there.
 function base(props) {
   return { viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg', 'aria-hidden': true, ...props };
 }

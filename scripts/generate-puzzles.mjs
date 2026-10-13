@@ -278,12 +278,21 @@ function addDays(dateKey, n) {
 }
 
 function main() {
-  const dataPath = join(__dirname, '..', 'src', 'data', 'puzzles.js');
-  const existingSrc = readFileSync(dataPath, 'utf8');
-  const existingMatch = existingSrc.match(/const puzzles = (\{[\s\S]*\});/);
-  if (!existingMatch) throw new Error('Could not parse existing puzzles.js');
-  // eslint-disable-next-line no-eval
-  const existing = (0, eval)(`(${existingMatch[1]})`);
+  // Plain JSON now (converted from a `const puzzles = {...}; export default`
+  // JS module for consistency with Pathways/Sprout/Zero In's data files -
+  // the content was always JSON-shaped, the JS wrapper just existed to hold
+  // the header comment below, which now lives here in the script instead):
+  // redirect the light beam(s) from source to target by placing mirrors
+  // ('/' or '\') in the interactive slot cells. `fixed` cells are either
+  // walls (block the beam) or pre-set mirrors (forced bounces the player
+  // has to route around/through) baked into the puzzle. `beams` is an
+  // array - one beam for ordinary puzzles, several for puzzles where the
+  // SAME mirror layout has to route every beam to its own target at once,
+  // which is the whole difficulty of that mode. par = true minimum mirror
+  // count to solve every beam, brute-force verified against every
+  // combination of slot orientations (see GAME_DESIGN.md).
+  const dataPath = join(__dirname, '..', 'src', 'data', 'puzzles.json');
+  const existing = JSON.parse(readFileSync(dataPath, 'utf8'));
 
   const kept = {};
   for (const [date, puzzle] of Object.entries(existing)) {
@@ -298,32 +307,10 @@ function main() {
   }
 
   const all = { ...kept, ...generated };
-  const orderedKeys = Object.keys(all).sort();
+  const ordered = {};
+  for (const date of Object.keys(all).sort()) ordered[date] = all[date];
 
-  const lines = orderedKeys.map((date) => `  '${date}': ${JSON.stringify(all[date])},`);
-  const header = `// Each puzzle: redirect the light beam(s) from source to target by placing
-// mirrors ('/' or '\\\\') in the interactive slot cells. \`fixed\` cells are
-// either walls (block the beam) or pre-set mirrors (forced bounces the
-// player has to route around/through) baked into the puzzle. \`beams\` is
-// an array - one beam for ordinary puzzles, several for puzzles where the
-// SAME mirror layout has to route every beam to its own target at once,
-// which is the whole difficulty of that mode. par = true minimum mirror
-// count to solve every beam, brute-force verified against every
-// combination of slot orientations (see GAME_DESIGN.md).
-//
-// Difficulty scales by DAY OF WEEK (see scripts/generate-puzzles.mjs's
-// WEEKLY_DIFFICULTY table), same convention as Pathways/Sprout/Realm -
-// Monday is easiest (1 beam), ramping to Sunday's 3-beam "boss day."
-// Dates before ${START_DATE} predate that scheme and were left as-shipped
-// rather than rewritten out from under anyone who'd already played them.
-const puzzles = {
-${lines.join('\n')}
-};
-
-export default puzzles;
-`;
-
-  writeFileSync(dataPath, header);
+  writeFileSync(dataPath, JSON.stringify(ordered, null, 2) + '\n');
   console.log(`Kept ${Object.keys(kept).length} existing puzzles (before ${START_DATE}), generated ${Object.keys(generated).length} new ones (${START_DATE} through ${END_DATE}) -> ${dataPath}`);
 }
 
