@@ -162,3 +162,41 @@
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
+
+.editActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cancelBtn {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  background: none;
+}
+
+.playingAs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.playingAs strong {
+  color: var(--text);
+  letter-spacing: 0.1em;
+}
+
+.editLink {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.78rem;
+  background: none;
+  padding: 2px 4px;
+}
