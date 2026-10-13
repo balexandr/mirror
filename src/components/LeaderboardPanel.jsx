@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchTodayBoard, submitScore, wouldQualify, findMyRow } from '../utils/leaderboard';
+import { fetchTodayBoard, submitScore, wouldQualify, findMyRow, LEADERBOARD_SIZE } from '../utils/leaderboard';
 import { IconClose, IconTrophy } from './Icons';
 import styles from './LeaderboardPanel.module.css';
 
@@ -8,7 +8,7 @@ const GAME_ID = 'mirror';
 // pendingScore is null when opened just to browse ("View leaderboard" in
 // the header); it's { score, tiebreak, scoreDisplay } when opened right
 // after a win, in which case this also offers the initials prompt if the
-// score currently qualifies for today's top 10.
+// score currently qualifies for today's top LEADERBOARD_SIZE.
 export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
   const [board, setBoard] = useState(null);
   const [initials, setInitials] = useState('');
@@ -24,7 +24,7 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
   const myRow = board && findMyRow(GAME_ID, board.rows);
 
   // Already on today's board? Never re-prompt for initials, even if
-  // the board still has fewer than 10 entries (that alone doesn't
+  // the board still has fewer than LEADERBOARD_SIZE entries (that alone doesn't
   // mean YOU haven't already claimed your spot).
   const qualifies = board && pendingScore && !outcome && !myRow
     && wouldQualify(pendingScore.score, board.rows, board.config);
@@ -50,7 +50,7 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
 
         {qualifies && (
           <form className={styles.initialsForm} onSubmit={handleSubmit}>
-            <p className={styles.prompt}>Top 10! Enter your initials:</p>
+            <p className={styles.prompt}>Top {LEADERBOARD_SIZE}! Enter your initials:</p>
             <input
               className={styles.initialsInput}
               value={initials}
