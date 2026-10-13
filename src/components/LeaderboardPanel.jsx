@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchTodayBoard, submitScore, wouldQualify, findMyRow, LEADERBOARD_SIZE } from '../utils/leaderboard';
+import { fetchTodayBoard, submitScore, wouldQualify, findMyRow, LEADERBOARD_SIZE, getSavedInitials, saveInitials } from '../utils/leaderboard';
 import { IconClose, IconTrophy } from './Icons';
 import styles from './LeaderboardPanel.module.css';
 
@@ -11,7 +11,7 @@ const GAME_ID = 'mirror';
 // score currently qualifies for today's top LEADERBOARD_SIZE.
 export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
   const [board, setBoard] = useState(null);
-  const [initials, setInitials] = useState('');
+  const [initials, setInitials] = useState(() => getSavedInitials());
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState(null); // null | 'accepted' | 'missed'
 
@@ -36,7 +36,10 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
     const result = await submitScore(GAME_ID, { ...pendingScore, initials });
     setSubmitting(false);
     setOutcome(result.accepted ? 'accepted' : 'missed');
-    if (result.accepted) reload();
+    if (result.accepted) {
+      saveInitials(initials);
+      reload();
+    }
   };
 
   return (

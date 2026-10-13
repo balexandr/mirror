@@ -71,3 +71,32 @@ export async function submitScore(gameId, { score, tiebreak = null, scoreDisplay
   if (error || !data?.[0]) return { accepted: false, rank: null }
   return { accepted: data[0].accepted, rank: data[0].rank }
 }
+
+const INITIALS_COOKIE = 'noodle_initials'
+
+// Shared across every game on *.noodlegames.co (cookie Domain, not
+// localStorage, which is walled off per subdomain) so a player only ever
+// types their initials once, not on every game and every day. Falls back
+// to a host-only cookie in dev, where the noodlegames.co domain attribute
+// wouldn't match and the browser would just drop it.
+function cookieDomain() {
+  return typeof location !== 'undefined' && location.hostname.endsWith('noodlegames.co')
+    ? '.noodlegames.co'
+    : ''
+}
+
+export function getSavedInitials() {
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)noodle_initials=([^;]*)/)
+    return match ? decodeURIComponent(match[1]) : ''
+  } catch {
+    return ''
+  }
+}
+
+export function saveInitials(initials) {
+  try {
+    const domain = cookieDomain()
+    document.cookie = `${INITIALS_COOKIE}=${encodeURIComponent(initials)}; max-age=31536000; path=/; samesite=lax${domain ? `; domain=${domain}` : ''}`
+  } catch {}
+}
