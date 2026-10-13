@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import puzzles from '../data/puzzles.json';
 import { simulateAllBeams, isSolved, mirrorCount, cycleOrientation, findSolution } from '../utils/beam.js';
 
@@ -71,6 +71,12 @@ export function useGameState() {
   const [firedCount, setFiredCount] = useState(0);
   const [firesUsedAtWin, setFiresUsedAtWin] = useState(0);
   const [mirrorsUsedAtWin, setMirrorsUsedAtWin] = useState(0);
+  // Leaderboard tiebreak: solve time, read back only at the instant of a
+  // winning fire. Restarts on a reload of an in-progress game (no "paused"
+  // state worth preserving mid-puzzle) but is itself persisted once a win
+  // happens, so a later reload of an already-won game keeps the real time.
+  const startTimeRef = useRef(null);
+  const [elapsedSecondsAtWin, setElapsedSecondsAtWin] = useState(null);
   const [gameStatus, setGameStatus] = useState('playing'); // 'playing' | 'won' | 'lost'
   const [initialized, setInitialized] = useState(false);
   const [poppedSlot, setPoppedSlot] = useState(null);
@@ -88,6 +94,10 @@ export function useGameState() {
       setFiresUsedAtWin(saved.firesUsedAtWin || 0);
       setMirrorsUsedAtWin(saved.mirrorsUsedAtWin || 0);
       setGameStatus(saved.gameStatus || 'playing');
+      setElapsedSecondsAtWin(saved.elapsedSecondsAtWin ?? null);
+      if ((saved.gameStatus || 'playing') === 'playing') startTimeRef.current = performance.now();
+    } else {
+      startTimeRef.current = performance.now();
     }
     setInitialized(true);
   }, [dateKey]);
@@ -103,8 +113,9 @@ export function useGameState() {
       firesUsedAtWin,
       mirrorsUsedAtWin,
       gameStatus,
+      elapsedSecondsAtWin,
     });
-  }, [mirrors, lastFiredMirrors, firedCount, firesUsedAtWin, mirrorsUsedAtWin, gameStatus, initialized]);
+  }, [mirrors, lastFiredMirrors, firedCount, firesUsedAtWin, mirrorsUsedAtWin, gameStatus, elapsedSecondsAtWin, initialized]);
 
   // Traces of the last committed shot, one per beam — null before any fire,
   // so the grid genuinely shows nothing until the player commits.
@@ -152,6 +163,9 @@ export function useGameState() {
       setGameStatus('won');
       setMirrorsUsedAtWin(mirrorCount(snapshot));
       setFiresUsedAtWin(newFiredCount);
+      setElapsedSecondsAtWin(
+        startTimeRef.current ? Math.round((performance.now() - startTimeRef.current) / 1000) : null
+      );
     } else if (newFiredCount >= MAX_FIRES) {
       setGameStatus('lost');
     }
@@ -194,6 +208,7 @@ export function useGameState() {
     maxFires: MAX_FIRES,
     firesUsedAtWin,
     mirrorsUsedAtWin,
+    elapsedSecondsAtWin,
     stars,
     poppedSlot,
     toggleSlot,

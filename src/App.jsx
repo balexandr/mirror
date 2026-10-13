@@ -35,6 +35,7 @@ export default function App() {
     maxFires,
     firesUsedAtWin,
     mirrorsUsedAtWin,
+    elapsedSecondsAtWin,
     stars,
     poppedSlot,
     toggleSlot,
@@ -80,7 +81,7 @@ export default function App() {
   useEffect(() => {
     if (gameStatus !== 'won') return;
     const t = setTimeout(() => {
-      const pending = toLeaderboardScore(firesUsedAtWin || firedCount);
+      const pending = toLeaderboardScore(firesUsedAtWin || firedCount, elapsedSecondsAtWin);
       fetchTodayBoard('mirror', dateKey).then((board) => {
         if (!board.config) return;
         if (findMyRow('mirror', board.rows)) return;
@@ -252,7 +253,7 @@ export default function App() {
       {showLeaderboard && (
         <LeaderboardPanel
           dateKey={dateKey}
-          pendingScore={gameStatus === 'won' ? toLeaderboardScore(firesUsedAtWin || firedCount) : null}
+          pendingScore={gameStatus === 'won' ? toLeaderboardScore(firesUsedAtWin || firedCount, elapsedSecondsAtWin) : null}
           onClose={() => setShowLeaderboard(false)}
         />
       )}
