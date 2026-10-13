@@ -1,0 +1,89 @@
+import { useState, useEffect, useCallback } from 'react';
+import { fetchTodayBoard, submitScore, wouldQualify, findMyRow } from '../utils/leaderboard';
+import { IconClose, IconTrophy } from './Icons';
+import styles from './LeaderboardPanel.module.css';
+
+const GAME_ID = 'mirror';
+
+// pendingScore is null when opened just to browse ("View leaderboard" in
+// the header); it's { score, tiebreak, scoreDisplay } when opened right
+// after a win, in which case this also offers the initials prompt if the
+// score currently qualifies for today's top 10.
+export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
+  const [board, setBoard] = useState(null);
+  const [initials, setInitials] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [outcome, setOutcome] = useState(null); // null | 'accepted' | 'missed'
+
+  const reload = useCallback(() => {
+    fetchTodayBoard(GAME_ID, dateKey).then(setBoard);
+  }, [dateKey]);
+
+  useEffect(() => { reload(); }, [reload]);
+
+  const myRow = board && findMyRow(GAME_ID, board.rows);
+
+  // Already on today's board? Never re-prompt for initials, even if
+  // the board still has fewer than 10 entries (that alone doesn't
+  // mean YOU haven't already claimed your spot).
+  const qualifies = board && pendingScore && !outcome && !myRow
+    && wouldQualify(pendingScore.score, board.rows, board.config);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (initials.length !== 3 || submitting) return;
+    setSubmitting(true);
+    const result = await submitScore(GAME_ID, { ...pendingScore, initials });
+    setSubmitting(false);
+    setOutcome(result.accepted ? 'accepted' : 'missed');
+    if (result.accepted) reload();
+  };
+
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.header}>
+          <span className={styles.titleIcon}><IconTrophy size={24} /></span>
+          <h2 className={styles.title}>Today's Leaderboard</h2>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><IconClose /></button>
+        </div>
+
+        {qualifies && (
+          <form className={styles.initialsForm} onSubmit={handleSubmit}>
+            <p className={styles.prompt}>Top 10! Enter your initials:</p>
+            <input
+              className={styles.initialsInput}
+              value={initials}
+              onChange={(e) => setInitials(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
+              maxLength={3}
+              autoFocus
+              aria-label="Your initials"
+            />
+            <button type="submit" className={styles.submitBtn} disabled={initials.length !== 3 || submitting}>
+              {submitting ? 'Saving…' : 'Submit'}
+            </button>
+          </form>
+        )}
+
+        {outcome === 'missed' && (
+          <p className={styles.outcomeMissed}>Someone beat you to that spot just now, so close.</p>
+        )}
+
+        {!board && <p className={styles.loading}>Loading…</p>}
+
+        {board && (
+          <ol className={styles.list}>
+            {board.rows.length === 0 && <li className={styles.empty}>No scores yet today. Be the first.</li>}
+            {board.rows.map((row, i) => (
+              <li key={`${row.initials}-${i}`} className={`${styles.row} ${row === myRow ? styles.rowMine : ''}`}>
+                <span className={styles.rank}>{i + 1}</span>
+                <span className={styles.initials}>{row.initials}</span>
+                <span className={styles.score}>{row.score_display}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </div>
+  );
+}

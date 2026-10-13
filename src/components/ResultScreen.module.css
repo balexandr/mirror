@@ -183,3 +183,21 @@
 .shareBtn.copied {
   background: var(--correct);
 }
+
+.leaderboardBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.leaderboardBtn:hover { background: var(--surface-hover); color: var(--text); }

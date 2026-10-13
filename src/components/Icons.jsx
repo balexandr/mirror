@@ -90,3 +90,23 @@ export function IconStar({ size = 14, filled = true, ...props }) {
     </svg>
   );
 }
+
+export function IconTrophy({ size = 40, ...props }) {
+  return (
+    <svg width={size} height={size} {...base(props)}>
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M7 5H4.5A2.5 2.5 0 0 0 5 10h2M17 5h2.5A2.5 2.5 0 0 1 19 10h-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M12 14v3.5M9 21h6M10 17.5h4l.6 3.5H9.4l.6-3.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconLeaderboard({ size = 20, ...props }) {
+  return (
+    <svg width={size} height={size} {...base(props)}>
+      <rect x="4" y="13" width="4" height="7" rx="1" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <rect x="10" y="8" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <rect x="16" y="4" width="4" height="16" rx="1" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    </svg>
+  );
+}
