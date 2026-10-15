@@ -12,6 +12,8 @@ import { GameLogo } from './components/GameLogo';
 import { recordTodayShare, getCompletedTodayCount, shareAllCompleted, TOTAL_GAMES } from './utils/shareAll';
 import { toLeaderboardScore } from './utils/leaderboardScore';
 import { fetchTodayBoard, findMyRow, wouldQualify } from './utils/leaderboard';
+import { getCurrentUser } from './lib/auth';
+import { supabase } from './lib/supabase';
 import { IconCheckmark, IconShare, IconFlashlight, IconLeaderboard } from './components/Icons';
 
 const HOW_TO_PLAY_KEY = 'mirror-how-to-play-seen';
@@ -70,6 +72,21 @@ export default function App() {
     if (gameStatus === 'won' || gameStatus === 'lost') {
       recordGame(dateKey, gameStatus, stars);
       recordTodayShare('mirror', dateKey, generateShareText());
+      // Fire-and-forget profile history — see PROFILE_DESIGN.md.
+      // record_game_history no-ops server-side for a signed-out
+      // player, so this never needs to special-case that here; never
+      // awaited in a way that could delay the win/loss reveal below.
+      getCurrentUser().then((user) => {
+        if (!user || !supabase) return;
+        const scoreDisplay = gameStatus === 'won'
+          ? toLeaderboardScore(firesUsedAtWin || firedCount, elapsedSecondsAtWin).scoreDisplay
+          : `Out of ${maxFires} fires`;
+        supabase.rpc('record_game_history', {
+          p_game_id: 'mirror',
+          p_outcome: gameStatus,
+          p_score_display: scoreDisplay,
+        }).then(() => {}, () => {});
+      });
       const t = setTimeout(() => setShowResult(true), 500);
       return () => clearTimeout(t);
     }
