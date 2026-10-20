@@ -41,12 +41,24 @@ export function wouldQualify(score, rows, config, size = LEADERBOARD_SIZE) {
 
 export async function fetchTodayBoard(gameId, dateKey) {
   if (!supabase) return { rows: [], config: null }
-  const [{ data: config }, { data: rows }] = await Promise.all([
-    supabase.from('leaderboard_games').select('sort_direction, tiebreak_direction').eq('game_id', gameId).single(),
-    supabase.from('leaderboard_scores').select('device_id, initials, score, tiebreak, score_display').eq('game_id', gameId).eq('date', dateKey),
-  ])
-  if (!config) return { rows: [], config: null }
-  return { rows: sortRows(rows || [], config), config }
+  // A blocked/failed request (ad blocker, offline, etc) throws instead
+  // of resolving with an {error}, same failure mode that caused the
+  // homepage's "no ratings" bug. Uncaught, that rejects this whole
+  // function, and since callers only ever attach a .then (never a
+  // .catch), the rejection silently vanishes — which looked exactly
+  // like "nothing happens" when a win should have auto-opened the
+  // leaderboard. Fail safe instead of failing silent.
+  try {
+    const [{ data: config }, { data: rows }] = await Promise.all([
+      supabase.from('leaderboard_games').select('sort_direction, tiebreak_direction').eq('game_id', gameId).single(),
+      supabase.from('leaderboard_scores').select('device_id, initials, score, tiebreak, score_display').eq('game_id', gameId).eq('date', dateKey),
+    ])
+    if (!config) return { rows: [], config: null }
+    return { rows: sortRows(rows || [], config), config }
+  } catch (err) {
+    console.error('fetchTodayBoard failed:', err)
+    return { rows: [], config: null }
+  }
 }
 
 // This device's own row in today's board, if it's already submitted
@@ -86,12 +98,17 @@ export const ALLTIME_LEADERBOARD_SIZE = 10
 
 export async function fetchAllTimeBoard(gameId) {
   if (!supabase) return { rows: [], config: null }
-  const [{ data: config }, { data: rows }] = await Promise.all([
-    supabase.from('leaderboard_alltime_games').select('sort_direction, tiebreak_direction').eq('game_id', gameId).single(),
-    supabase.from('leaderboard_alltime_scores').select('user_id, display_name, avatar_id, score, tiebreak, score_display').eq('game_id', gameId),
-  ])
-  if (!config) return { rows: [], config: null }
-  return { rows: sortRows(rows || [], config), config }
+  try {
+    const [{ data: config }, { data: rows }] = await Promise.all([
+      supabase.from('leaderboard_alltime_games').select('sort_direction, tiebreak_direction').eq('game_id', gameId).single(),
+      supabase.from('leaderboard_alltime_scores').select('user_id, display_name, avatar_id, score, tiebreak, score_display').eq('game_id', gameId),
+    ])
+    if (!config) return { rows: [], config: null }
+    return { rows: sortRows(rows || [], config), config }
+  } catch (err) {
+    console.error('fetchAllTimeBoard failed:', err)
+    return { rows: [], config: null }
+  }
 }
 
 export function findMyAllTimeRow(userId, rows) {
