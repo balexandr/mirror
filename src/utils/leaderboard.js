@@ -73,21 +73,25 @@ export function findMyRow(gameId, rows) {
 
 export async function submitScore(gameId, { score, tiebreak = null, scoreDisplay, initials }) {
   if (!supabase) return { accepted: false, rank: null, error: 'offline' }
-  const { data, error } = await supabase.rpc('submit_score', {
-    p_game_id: gameId,
-    p_device_id: getDeviceId(gameId),
-    p_score: score,
-    p_tiebreak: tiebreak,
-    p_score_display: scoreDisplay,
-    p_initials: initials,
-  })
-  // Distinguish a real server error (bad initials, score out of bounds,
-  // network issue) from a legitimate non-qualifying submission — these
-  // used to collapse into the same result, so a genuine bug looked
-  // identical to "someone beat you to it" in the UI.
-  if (error) return { accepted: false, rank: null, error: error.message }
-  if (!data?.[0]) return { accepted: false, rank: null, error: 'no response' }
-  return { accepted: data[0].accepted, rank: data[0].rank, error: null }
+  try {
+    const { data, error } = await supabase.rpc('submit_score', {
+      p_game_id: gameId,
+      p_device_id: getDeviceId(gameId),
+      p_score: score,
+      p_tiebreak: tiebreak,
+      p_score_display: scoreDisplay,
+      p_initials: initials,
+    })
+    // Distinguish a real server error (bad initials, score out of bounds,
+    // network issue) from a legitimate non-qualifying submission - these
+    // used to collapse into the same result, so a genuine bug looked
+    // identical to "someone beat you to it" in the UI.
+    if (error) return { accepted: false, rank: null, error: error.message }
+    if (!data?.[0]) return { accepted: false, rank: null, error: 'no response' }
+    return { accepted: data[0].accepted, rank: data[0].rank, error: null }
+  } catch (err) {
+    return { accepted: false, rank: null, error: err.message || String(err) }
+  }
 }
 
 // All-time board: never resets, requires a signed-in account (see
@@ -118,15 +122,19 @@ export function findMyAllTimeRow(userId, rows) {
 
 export async function submitAllTimeScore(gameId, { score, tiebreak = null, scoreDisplay }) {
   if (!supabase) return { accepted: false, rank: null, error: 'offline' }
-  const { data, error } = await supabase.rpc('submit_alltime_score', {
-    p_game_id: gameId,
-    p_score: score,
-    p_tiebreak: tiebreak,
-    p_score_display: scoreDisplay,
-  })
-  if (error) return { accepted: false, rank: null, error: error.message }
-  if (!data?.[0]) return { accepted: false, rank: null, error: 'no response' }
-  return { accepted: data[0].accepted, rank: data[0].rank, error: null }
+  try {
+    const { data, error } = await supabase.rpc('submit_alltime_score', {
+      p_game_id: gameId,
+      p_score: score,
+      p_tiebreak: tiebreak,
+      p_score_display: scoreDisplay,
+    })
+    if (error) return { accepted: false, rank: null, error: error.message }
+    if (!data?.[0]) return { accepted: false, rank: null, error: 'no response' }
+    return { accepted: data[0].accepted, rank: data[0].rank, error: null }
+  } catch (err) {
+    return { accepted: false, rank: null, error: err.message || String(err) }
+  }
 }
 
 const INITIALS_COOKIE = 'noodle_initials'

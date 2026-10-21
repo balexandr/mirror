@@ -31,9 +31,28 @@ const cookieAuthStorage = {
   },
   setItem(_key, value) {
     try {
+      // Google/GitHub OAuth sessions carry a lot of bulky profile data
+      // (full avatar URL, duplicated identities array, a separate
+      // provider API token) this app never reads — Avatar.jsx and
+      // player_profiles.display_name replace all of it. Keeping the
+      // full session JSON pushed well past a browser's ~4KB per-cookie
+      // limit, which gets silently REFUSED rather than truncated, so
+      // nothing was ever actually getting stored. Strip to just what a
+      // session needs to keep working.
+      const parsed = JSON.parse(value)
+      const trimmed = {
+        access_token: parsed.access_token,
+        refresh_token: parsed.refresh_token,
+        expires_at: parsed.expires_at,
+        expires_in: parsed.expires_in,
+        token_type: parsed.token_type,
+        user: parsed.user
+          ? { id: parsed.user.id, aud: parsed.user.aud, role: parsed.user.role, email: parsed.user.email }
+          : null,
+      }
       const domain = cookieDomain()
       const secure = location.protocol === 'https:' ? '; secure' : ''
-      document.cookie = `${SESSION_COOKIE}=${encodeURIComponent(value)}; max-age=8640000; path=/; samesite=lax${domain ? `; domain=${domain}` : ''}${secure}`
+      document.cookie = `${SESSION_COOKIE}=${encodeURIComponent(JSON.stringify(trimmed))}; max-age=8640000; path=/; samesite=lax${domain ? `; domain=${domain}` : ''}${secure}`
     } catch {}
   },
   removeItem() {
