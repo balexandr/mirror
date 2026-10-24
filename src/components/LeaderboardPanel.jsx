@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   fetchTodayBoard, submitScore, wouldQualify, findMyRow, LEADERBOARD_SIZE,
   getSavedInitials, saveInitials,
-  fetchAllTimeBoard, submitAllTimeScore, findMyAllTimeRow, ALLTIME_LEADERBOARD_SIZE,
+  fetchAllTimeBoard, findMyAllTimeRow, ALLTIME_LEADERBOARD_SIZE,
 } from '../utils/leaderboard';
 import { getCurrentUser, onAuthStateChange, signInUrl } from '../lib/auth';
 import { Avatar } from './Avatar';
@@ -14,9 +14,12 @@ const GAME_ID = 'mirror';
 // pendingScore is null when opened just to browse ("View leaderboard" in
 // the header); it's { score, tiebreak, scoreDisplay } when opened right
 // after a win, in which case this also offers the initials prompt if the
-// score currently qualifies for today's top LEADERBOARD_SIZE (Today tab)
-// or the all-time top ALLTIME_LEADERBOARD_SIZE (All-Time tab, account
-// required — see LEADERBOARD_DESIGN.md's "All-Time Leaderboard" section).
+// score currently qualifies for today's top LEADERBOARD_SIZE (Today tab).
+// The All-Time tab never asks for action: a signed-in player's score is
+// already submitted in the background by App.jsx's win effect (the RPC
+// is safe to call unconditionally - see LEADERBOARD_DESIGN.md), this
+// panel just displays the board and refetches shortly after mount so a
+// just-earned spot shows up without the player doing anything.
 export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
   const [activeTab, setActiveTab] = useState('today'); // 'today' | 'alltime'
 
@@ -29,8 +32,6 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
 
   const [user, setUser] = useState(undefined); // undefined = still checking, null = signed out
   const [allTimeBoard, setAllTimeBoard] = useState(null);
-  const [allTimeSubmitting, setAllTimeSubmitting] = useState(false);
-  const [allTimeOutcome, setAllTimeOutcome] = useState(null); // null | 'accepted' | 'missed'
 
   const reload = useCallback(() => {
     fetchTodayBoard(GAME_ID, dateKey).then(setBoard);
@@ -48,6 +49,15 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
     return onAuthStateChange(setUser);
   }, []);
 
+  // The background submit from the just-finished game may not have
+  // landed yet when this panel first mounts - give it a beat, then
+  // refetch once so a new top-10 spot appears without a click.
+  useEffect(() => {
+    if (!pendingScore) return;
+    const t = setTimeout(reloadAllTime, 1200);
+    return () => clearTimeout(t);
+  }, [pendingScore, reloadAllTime]);
+
   const myRow = board && findMyRow(GAME_ID, board.rows);
 
   // Already on today's board? Never re-prompt for initials, even if
@@ -57,8 +67,6 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
     && wouldQualify(pendingScore.score, board.rows, board.config);
 
   const myAllTimeRow = user && allTimeBoard && findMyAllTimeRow(user.id, allTimeBoard.rows);
-  const qualifiesAllTime = user && allTimeBoard && pendingScore && !allTimeOutcome && !myAllTimeRow
-    && wouldQualify(pendingScore.score, allTimeBoard.rows, allTimeBoard.config, ALLTIME_LEADERBOARD_SIZE);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,20 +85,6 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
       setSavedInitials(initials);
       reload();
     }
-  };
-
-  const handleSubmitAllTime = async () => {
-    if (allTimeSubmitting) return;
-    setAllTimeSubmitting(true);
-    const result = await submitAllTimeScore(GAME_ID, pendingScore);
-    setAllTimeSubmitting(false);
-    if (result.error) {
-      console.error('submitAllTimeScore failed:', result.error);
-      setAllTimeOutcome('error');
-    } else {
-      setAllTimeOutcome(result.accepted ? 'accepted' : 'missed');
-    }
-    if (result.accepted) reloadAllTime();
   };
 
   // Not tied to a score submission — just changes what prefills next
@@ -204,26 +198,13 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
             {user === null && (
               <div className={styles.signinBox}>
                 <p className={styles.prompt}>Sign in to get on the all-time board</p>
-                <p className={styles.signinSub}>Shows your own chosen name, never resets, top {ALLTIME_LEADERBOARD_SIZE} only.</p>
+                <p className={styles.signinSub}>Shows your own chosen name, never resets, top {ALLTIME_LEADERBOARD_SIZE} only. Once you're signed in, a qualifying score is added automatically - nothing to submit.</p>
                 <a className={styles.submitBtn} href={signInUrl(location.href)}>Sign in</a>
               </div>
             )}
 
-            {user && qualifiesAllTime && (
-              <div className={styles.initialsForm}>
-                <p className={styles.prompt}>New All-Time Top {ALLTIME_LEADERBOARD_SIZE}!</p>
-                <button type="button" className={styles.submitBtn} disabled={allTimeSubmitting} onClick={handleSubmitAllTime}>
-                  {allTimeSubmitting ? 'Saving…' : 'Add me to the board'}
-                </button>
-              </div>
-            )}
-
-            {allTimeOutcome === 'missed' && (
-              <p className={styles.outcomeMissed}>Someone beat you to that spot just now, so close.</p>
-            )}
-
-            {allTimeOutcome === 'error' && (
-              <p className={styles.outcomeMissed}>Couldn't save your score — try again in a bit.</p>
+            {user && pendingScore && !myAllTimeRow && (
+              <p className={styles.signinSub}>Your score was submitted automatically. It'll show up here if it made the top {ALLTIME_LEADERBOARD_SIZE}.</p>
             )}
 
             {!allTimeBoard && <p className={styles.loading}>Loading…</p>}
