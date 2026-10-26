@@ -11,7 +11,7 @@ import { NoodleLogoIcon } from './components/NoodleLogo';
 import { GameLogo } from './components/GameLogo';
 import { recordTodayShare, getCompletedTodayCount, shareAllCompleted, TOTAL_GAMES } from './utils/shareAll';
 import { toLeaderboardScore } from './utils/leaderboardScore';
-import { fetchTodayBoard, findMyRow, wouldQualify, submitAllTimeScore } from './utils/leaderboard';
+import { fetchTodayBoard, findMyRow, wouldQualify } from './utils/leaderboard';
 import { getCurrentUser } from './lib/auth';
 import { supabase } from './lib/supabase';
 import { IconCheckmark, IconShare, IconFlashlight, IconLeaderboard } from './components/Icons';
@@ -76,6 +76,10 @@ export default function App() {
       // record_game_history no-ops server-side for a signed-out
       // player, so this never needs to special-case that here; never
       // awaited in a way that could delay the win/loss reveal below.
+      // Mirror has no all-time leaderboard (not that kind of game —
+      // one best time wouldn't mean much against a flashlight-reveal
+      // puzzle that's different content every day), so this is the
+      // only thing that fires here.
       getCurrentUser().then((user) => {
         if (!user || !supabase) return;
         const scoreDisplay = gameStatus === 'won'
@@ -86,18 +90,6 @@ export default function App() {
           p_outcome: gameStatus,
           p_score_display: scoreDisplay,
         }).then(() => {}, () => {});
-        // Fire-and-forget all-time submission too — no reason to make
-        // a signed-in player open the leaderboard and switch to the
-        // All-Time tab themselves just to get considered. The RPC is
-        // already safe to call on every win: it silently no-ops if the
-        // score isn't an improvement on their own existing one and
-        // isn't currently top 10 (see LEADERBOARD_DESIGN.md), so this
-        // never needs its own qualifying check first.
-        if (gameStatus === 'won') {
-          submitAllTimeScore('mirror', toLeaderboardScore(firesUsedAtWin || firedCount, elapsedSecondsAtWin))
-            .then((result) => { if (result.error) console.error('submitAllTimeScore failed:', result.error); })
-            .catch((err) => console.error('submitAllTimeScore failed:', err));
-        }
       });
       const t = setTimeout(() => setShowResult(true), 500);
       return () => clearTimeout(t);

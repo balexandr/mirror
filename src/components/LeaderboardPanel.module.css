@@ -53,56 +53,6 @@
 
 .closeBtn:hover { background: var(--surface-hover); color: var(--text); }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  padding: 3px;
-  margin-bottom: 14px;
-}
-
-.tab {
-  flex: 1;
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-weight: 700;
-  font-size: 0.8rem;
-  padding: 7px 0;
-  border-radius: var(--radius-sm);
-}
-
-.tabActive {
-  background: var(--accent);
-  color: #fff;
-}
-
-/* All-Time can show up to 10 rows, Today only 3 — without a floor
-   here the panel's whole height yanks around on every tab switch. */
-.tabBody {
-  min-height: 300px;
-}
-
-.signinBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 10px;
-  margin-bottom: 14px;
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-md);
-  text-align: center;
-}
-
-.signinSub {
-  font-size: 0.76rem;
-  color: var(--text-secondary);
-  margin: -4px 0 4px;
-}
-
 .initialsForm {
   display: flex;
   flex-direction: column;
@@ -145,8 +95,6 @@
 }
 
 .submitBtn:disabled { opacity: 0.5; }
-
-a.submitBtn { display: inline-block; text-decoration: none; }
 
 .outcomeMissed {
   font-size: 0.8rem;

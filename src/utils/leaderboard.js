@@ -31,8 +31,7 @@ export function sortRows(rows, config) {
 // Client-side pre-check only, purely for UX (whether to show the
 // initials prompt at all). The RPC re-checks authoritatively at
 // submit time, since another score could land between this check and
-// the actual submit. `size` defaults to the daily board's cutoff;
-// all-time callers pass ALLTIME_LEADERBOARD_SIZE instead.
+// the actual submit.
 export function wouldQualify(score, rows, config, size = LEADERBOARD_SIZE) {
   if (!config || rows.length < size) return true
   const betterCount = rows.filter((r) => isBetter(r.score, score, config.sort_direction)).length
@@ -86,49 +85,6 @@ export async function submitScore(gameId, { score, tiebreak = null, scoreDisplay
     // network issue) from a legitimate non-qualifying submission - these
     // used to collapse into the same result, so a genuine bug looked
     // identical to "someone beat you to it" in the UI.
-    if (error) return { accepted: false, rank: null, error: error.message }
-    if (!data?.[0]) return { accepted: false, rank: null, error: 'no response' }
-    return { accepted: data[0].accepted, rank: data[0].rank, error: null }
-  } catch (err) {
-    return { accepted: false, rank: null, error: err.message || String(err) }
-  }
-}
-
-// All-time board: never resets, requires a signed-in account (see
-// LEADERBOARD_DESIGN.md's "All-Time Leaderboard" section), keyed by
-// (game_id, user_id) instead of (game_id, date, device_id) — one row
-// per account, no `date` filter.
-export const ALLTIME_LEADERBOARD_SIZE = 10
-
-export async function fetchAllTimeBoard(gameId) {
-  if (!supabase) return { rows: [], config: null }
-  try {
-    const [{ data: config }, { data: rows }] = await Promise.all([
-      supabase.from('leaderboard_alltime_games').select('sort_direction, tiebreak_direction').eq('game_id', gameId).single(),
-      supabase.from('leaderboard_alltime_scores').select('user_id, display_name, avatar_id, score, tiebreak, score_display').eq('game_id', gameId),
-    ])
-    if (!config) return { rows: [], config: null }
-    return { rows: sortRows(rows || [], config), config }
-  } catch (err) {
-    console.error('fetchAllTimeBoard failed:', err)
-    return { rows: [], config: null }
-  }
-}
-
-export function findMyAllTimeRow(userId, rows) {
-  if (!userId) return null
-  return rows.find((r) => r.user_id === userId) || null
-}
-
-export async function submitAllTimeScore(gameId, { score, tiebreak = null, scoreDisplay }) {
-  if (!supabase) return { accepted: false, rank: null, error: 'offline' }
-  try {
-    const { data, error } = await supabase.rpc('submit_alltime_score', {
-      p_game_id: gameId,
-      p_score: score,
-      p_tiebreak: tiebreak,
-      p_score_display: scoreDisplay,
-    })
     if (error) return { accepted: false, rank: null, error: error.message }
     if (!data?.[0]) return { accepted: false, rank: null, error: 'no response' }
     return { accepted: data[0].accepted, rank: data[0].rank, error: null }

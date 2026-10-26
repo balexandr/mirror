@@ -1,11 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  fetchTodayBoard, submitScore, wouldQualify, findMyRow, LEADERBOARD_SIZE,
-  getSavedInitials, saveInitials,
-  fetchAllTimeBoard, findMyAllTimeRow, ALLTIME_LEADERBOARD_SIZE,
-} from '../utils/leaderboard';
-import { getCurrentUser, onAuthStateChange, signInUrl } from '../lib/auth';
-import { Avatar } from './Avatar';
+import { fetchTodayBoard, submitScore, wouldQualify, findMyRow, LEADERBOARD_SIZE, getSavedInitials, saveInitials } from '../utils/leaderboard';
 import { IconClose, IconTrophy } from './Icons';
 import styles from './LeaderboardPanel.module.css';
 
@@ -14,15 +8,8 @@ const GAME_ID = 'mirror';
 // pendingScore is null when opened just to browse ("View leaderboard" in
 // the header); it's { score, tiebreak, scoreDisplay } when opened right
 // after a win, in which case this also offers the initials prompt if the
-// score currently qualifies for today's top LEADERBOARD_SIZE (Today tab).
-// The All-Time tab never asks for action: a signed-in player's score is
-// already submitted in the background by App.jsx's win effect (the RPC
-// is safe to call unconditionally - see LEADERBOARD_DESIGN.md), this
-// panel just displays the board and refetches shortly after mount so a
-// just-earned spot shows up without the player doing anything.
+// score currently qualifies for today's top LEADERBOARD_SIZE.
 export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
-  const [activeTab, setActiveTab] = useState('today'); // 'today' | 'alltime'
-
   const [board, setBoard] = useState(null);
   const [initials, setInitials] = useState(() => getSavedInitials());
   const [savedInitials, setSavedInitials] = useState(() => getSavedInitials());
@@ -30,33 +17,11 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState(null); // null | 'accepted' | 'missed'
 
-  const [user, setUser] = useState(undefined); // undefined = still checking, null = signed out
-  const [allTimeBoard, setAllTimeBoard] = useState(null);
-
   const reload = useCallback(() => {
     fetchTodayBoard(GAME_ID, dateKey).then(setBoard);
   }, [dateKey]);
 
-  const reloadAllTime = useCallback(() => {
-    fetchAllTimeBoard(GAME_ID).then(setAllTimeBoard);
-  }, []);
-
   useEffect(() => { reload(); }, [reload]);
-  useEffect(() => { reloadAllTime(); }, [reloadAllTime]);
-
-  useEffect(() => {
-    getCurrentUser().then(setUser);
-    return onAuthStateChange(setUser);
-  }, []);
-
-  // The background submit from the just-finished game may not have
-  // landed yet when this panel first mounts - give it a beat, then
-  // refetch once so a new top-10 spot appears without a click.
-  useEffect(() => {
-    if (!pendingScore) return;
-    const t = setTimeout(reloadAllTime, 1200);
-    return () => clearTimeout(t);
-  }, [pendingScore, reloadAllTime]);
 
   const myRow = board && findMyRow(GAME_ID, board.rows);
 
@@ -65,8 +30,6 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
   // mean YOU haven't already claimed your spot).
   const qualifies = board && pendingScore && !outcome && !myRow
     && wouldQualify(pendingScore.score, board.rows, board.config);
-
-  const myAllTimeRow = user && allTimeBoard && findMyAllTimeRow(user.id, allTimeBoard.rows);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -107,122 +70,69 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><IconClose /></button>
         </div>
 
-        <div className={styles.tabs}>
-          <button
-            className={`${styles.tab} ${activeTab === 'today' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('today')}
-          >
-            Today
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'alltime' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('alltime')}
-          >
-            All-Time
-          </button>
-        </div>
+        {editing && (
+          <form className={styles.initialsForm} onSubmit={handleEditSave}>
+            <p className={styles.prompt}>Change your initials (2-3 letters):</p>
+            <input
+              className={styles.initialsInput}
+              value={initials}
+              onChange={(e) => setInitials(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
+              maxLength={3}
+              autoFocus
+              aria-label="Your initials"
+            />
+            <div className={styles.editActions}>
+              <button type="submit" className={styles.submitBtn} disabled={initials.length < 2}>Save</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => { setInitials(savedInitials); setEditing(false); }}>Cancel</button>
+            </div>
+          </form>
+        )}
 
-        {activeTab === 'today' && (
-          <div className={styles.tabBody}>
-            {editing && (
-              <form className={styles.initialsForm} onSubmit={handleEditSave}>
-                <p className={styles.prompt}>Change your initials (2-3 letters):</p>
-                <input
-                  className={styles.initialsInput}
-                  value={initials}
-                  onChange={(e) => setInitials(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
-                  maxLength={3}
-                  autoFocus
-                  aria-label="Your initials"
-                />
-                <div className={styles.editActions}>
-                  <button type="submit" className={styles.submitBtn} disabled={initials.length < 2}>Save</button>
-                  <button type="button" className={styles.cancelBtn} onClick={() => { setInitials(savedInitials); setEditing(false); }}>Cancel</button>
-                </div>
-              </form>
-            )}
+        {!editing && qualifies && (
+          <form className={styles.initialsForm} onSubmit={handleSubmit}>
+            <p className={styles.prompt}>Top {LEADERBOARD_SIZE}! Enter your initials (2-3 letters):</p>
+            <input
+              className={styles.initialsInput}
+              value={initials}
+              onChange={(e) => setInitials(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
+              maxLength={3}
+              autoFocus
+              aria-label="Your initials"
+            />
+            <button type="submit" className={styles.submitBtn} disabled={initials.length < 2 || submitting}>
+              {submitting ? 'Saving…' : 'Submit'}
+            </button>
+          </form>
+        )}
 
-            {!editing && qualifies && (
-              <form className={styles.initialsForm} onSubmit={handleSubmit}>
-                <p className={styles.prompt}>Top {LEADERBOARD_SIZE}! Enter your initials (2-3 letters):</p>
-                <input
-                  className={styles.initialsInput}
-                  value={initials}
-                  onChange={(e) => setInitials(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
-                  maxLength={3}
-                  autoFocus
-                  aria-label="Your initials"
-                />
-                <button type="submit" className={styles.submitBtn} disabled={initials.length < 2 || submitting}>
-                  {submitting ? 'Saving…' : 'Submit'}
-                </button>
-              </form>
-            )}
-
-            {!editing && !qualifies && savedInitials && (
-              <div className={styles.playingAs}>
-                <span>Playing as <strong>{savedInitials}</strong></span>
-                <button type="button" className={styles.editLink} onClick={() => setEditing(true)}>edit</button>
-              </div>
-            )}
-
-            {outcome === 'missed' && (
-              <p className={styles.outcomeMissed}>Someone beat you to that spot just now, so close.</p>
-            )}
-
-            {outcome === 'error' && (
-              <p className={styles.outcomeMissed}>Couldn't save your score — try again in a bit.</p>
-            )}
-
-            {!board && <p className={styles.loading}>Loading…</p>}
-
-            {board && (
-              <ol className={styles.list}>
-                {board.rows.length === 0 && <li className={styles.empty}>No scores yet today. Be the first.</li>}
-                {board.rows.map((row, i) => (
-                  <li key={`${row.initials}-${i}`} className={`${styles.row} ${row === myRow ? styles.rowMine : ''}`}>
-                    <span className={styles.rank}>{i + 1}</span>
-                    <span className={styles.initials}>{row.initials}</span>
-                    <span className={styles.score}>{row.score_display}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
+        {!editing && !qualifies && savedInitials && (
+          <div className={styles.playingAs}>
+            <span>Playing as <strong>{savedInitials}</strong></span>
+            <button type="button" className={styles.editLink} onClick={() => setEditing(true)}>edit</button>
           </div>
         )}
 
-        {activeTab === 'alltime' && (
-          <div className={styles.tabBody}>
-            {user === undefined && <p className={styles.loading}>Loading…</p>}
+        {outcome === 'missed' && (
+          <p className={styles.outcomeMissed}>Someone beat you to that spot just now, so close.</p>
+        )}
 
-            {user === null && (
-              <div className={styles.signinBox}>
-                <p className={styles.prompt}>Sign in to get on the all-time board</p>
-                <p className={styles.signinSub}>Shows your own chosen name, never resets, top {ALLTIME_LEADERBOARD_SIZE} only. Once you're signed in, a qualifying score is added automatically - nothing to submit.</p>
-                <a className={styles.submitBtn} href={signInUrl(location.href)}>Sign in</a>
-              </div>
-            )}
+        {outcome === 'error' && (
+          <p className={styles.outcomeMissed}>Couldn't save your score — try again in a bit.</p>
+        )}
 
-            {user && pendingScore && !myAllTimeRow && (
-              <p className={styles.signinSub}>Your score was submitted automatically. It'll show up here if it made the top {ALLTIME_LEADERBOARD_SIZE}.</p>
-            )}
+        {!board && <p className={styles.loading}>Loading…</p>}
 
-            {!allTimeBoard && <p className={styles.loading}>Loading…</p>}
-
-            {allTimeBoard && (
-              <ol className={styles.list}>
-                {allTimeBoard.rows.length === 0 && <li className={styles.empty}>No all-time scores yet. Be the first.</li>}
-                {allTimeBoard.rows.map((row, i) => (
-                  <li key={`${row.user_id}-${i}`} className={`${styles.row} ${row === myAllTimeRow ? styles.rowMine : ''}`}>
-                    <span className={styles.rank}>{i + 1}</span>
-                    <Avatar id={row.avatar_id} size={22} />
-                    <span className={styles.initials}>{row.display_name}</span>
-                    <span className={styles.score}>{row.score_display}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
+        {board && (
+          <ol className={styles.list}>
+            {board.rows.length === 0 && <li className={styles.empty}>No scores yet today. Be the first.</li>}
+            {board.rows.map((row, i) => (
+              <li key={`${row.initials}-${i}`} className={`${styles.row} ${row === myRow ? styles.rowMine : ''}`}>
+                <span className={styles.rank}>{i + 1}</span>
+                <span className={styles.initials}>{row.initials}</span>
+                <span className={styles.score}>{row.score_display}</span>
+              </li>
+            ))}
+          </ol>
         )}
       </div>
     </div>
