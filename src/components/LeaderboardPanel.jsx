@@ -15,7 +15,8 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
   const [savedInitials, setSavedInitials] = useState(() => getSavedInitials());
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [outcome, setOutcome] = useState(null); // null | 'accepted' | 'missed'
+  const [outcome, setOutcome] = useState(null); // null | 'accepted' | 'missed' | 'error'
+  const [errorDetail, setErrorDetail] = useState(null);
 
   const reload = useCallback(() => {
     fetchTodayBoard(GAME_ID, dateKey).then(setBoard);
@@ -40,6 +41,7 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
     if (result.error) {
       console.error('submitScore failed:', result.error);
       setOutcome('error');
+      setErrorDetail(result.error);
     } else {
       setOutcome(result.accepted ? 'accepted' : 'missed');
     }
@@ -117,7 +119,10 @@ export default function LeaderboardPanel({ dateKey, pendingScore, onClose }) {
         )}
 
         {outcome === 'error' && (
-          <p className={styles.outcomeMissed}>Couldn't save your score — try again in a bit.</p>
+          <p className={styles.outcomeMissed}>
+            Couldn't save your score — try again in a bit.
+            {errorDetail && <><br /><span className={styles.errorDetail}>{errorDetail}</span></>}
+          </p>
         )}
 
         {!board && <p className={styles.loading}>Loading…</p>}

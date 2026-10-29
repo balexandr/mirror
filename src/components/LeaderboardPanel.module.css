@@ -103,6 +103,13 @@
   margin-bottom: 10px;
 }
 
+.errorDetail {
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: var(--text-dim);
+  word-break: break-word;
+}
+
 .loading {
   font-size: 0.85rem;
   color: var(--text-dim);
